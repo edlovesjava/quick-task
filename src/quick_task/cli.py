@@ -1,13 +1,108 @@
 """CLI entry point for Quick Task."""
 
+import json
+
 import click
+from rich.console import Console
+from rich.table import Table
+
+from quick_task.discovery import find_task_file
+from quick_task.parser import parse_file
+from quick_task.models import TaskStatus
+
+
+console = Console()
+
+STATUS_SYMBOLS = {
+    TaskStatus.TODO: "[ ]",
+    TaskStatus.IN_PROGRESS: "[~]",
+    TaskStatus.DONE: "[x]",
+    TaskStatus.CANCELLED: "[-]",
+    TaskStatus.BLOCKED: "[?]",
+    TaskStatus.DEFERRED: "[>]",
+}
+
+STATUS_NAMES = {
+    "todo": TaskStatus.TODO,
+    "in-progress": TaskStatus.IN_PROGRESS,
+    "done": TaskStatus.DONE,
+    "cancelled": TaskStatus.CANCELLED,
+    "blocked": TaskStatus.BLOCKED,
+    "deferred": TaskStatus.DEFERRED,
+}
 
 
 @click.group()
 @click.version_option()
-def main():
+@click.option("--file", "-f", "file_path", help="Task file to use")
+@click.pass_context
+def main(ctx, file_path):
     """Quick Task - Markdown-based task management."""
-    pass
+    ctx.ensure_object(dict)
+    ctx.obj["file_path"] = file_path
+
+
+@main.command("list")
+@click.option(
+    "--status", "-s",
+    type=click.Choice(["todo", "in-progress", "done", "cancelled", "blocked", "deferred"], case_sensitive=False),
+    help="Filter by status",
+)
+@click.option("--list", "-l", "list_name", help="Filter by list name")
+@click.option("--json", "as_json", is_flag=True, help="Output as JSON")
+@click.pass_context
+def list_tasks(ctx, status, list_name, as_json):
+    """List tasks."""
+    file_path = find_task_file(explicit_file=ctx.obj.get("file_path"))
+    if not file_path:
+        console.print("[red]No task file found[/red]")
+        raise SystemExit(1)
+
+    task_file = parse_file(file_path)
+
+    # Collect tasks
+    tasks = []
+    for tl in task_file.lists:
+        if list_name and tl.name.lower() != list_name.lower():
+            continue
+        for task in collect_with_list(tl.name, tl.tasks, 0):
+            tasks.append(task)
+
+    # Filter by status
+    if status:
+        target_status = STATUS_NAMES.get(status.lower())
+        tasks = [t for t in tasks if t["status"] == target_status]
+
+    if as_json:
+        output = [
+            {
+                "title": t["task"].title,
+                "status": t["status"].name.lower(),
+                "list": t["list"],
+                "bookmark": t["task"].bookmark,
+            }
+            for t in tasks
+        ]
+        click.echo(json.dumps(output, indent=2))
+    else:
+        table = Table(show_header=True)
+        table.add_column("Status", width=5)
+        table.add_column("Task")
+        table.add_column("List")
+
+        for t in tasks:
+            symbol = STATUS_SYMBOLS[t["status"]]
+            indent = "  " * t["depth"]
+            table.add_row(symbol, f"{indent}{t['task'].title}", t["list"])
+
+        console.print(table)
+
+
+def collect_with_list(list_name, tasks, depth):
+    """Collect tasks with their list name and depth."""
+    for task in tasks:
+        yield {"task": task, "status": task.status, "list": list_name, "depth": depth}
+        yield from collect_with_list(list_name, task.children, depth + 1)
 
 
 if __name__ == "__main__":
