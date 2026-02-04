@@ -14,6 +14,11 @@ class ListNotFoundError(Exception):
     pass
 
 
+class CircularDependencyError(Exception):
+    """Raised when a circular dependency is detected."""
+    pass
+
+
 def add_task(
     task_file: TaskFile,
     title: str,
@@ -154,3 +159,48 @@ def find_task_list(task_file: TaskFile, task: Task) -> TaskList | None:
         if task in task_list.tasks:
             return task_list
     return None
+
+
+def link_dependency(
+    task_file: TaskFile,
+    query: str,
+    depends_on: str,
+) -> Task:
+    """Add a dependency to a task."""
+    task = find_task(task_file, query)
+    if task is None:
+        raise TaskNotFoundError(f"Task not found: {query}")
+
+    # Verify dependency exists
+    dep_task = find_task(task_file, depends_on)
+    if dep_task is None:
+        raise TaskNotFoundError(f"Dependency task not found: {depends_on}")
+
+    # Check for circular dependency
+    if would_create_cycle(task_file, task, dep_task):
+        raise CircularDependencyError(f"Circular dependency: {query} -> {depends_on}")
+
+    # Store as the query string (bookmark or title)
+    task.metadata["depends"] = depends_on
+    return task
+
+
+def would_create_cycle(task_file: TaskFile, task: Task, dep: Task) -> bool:
+    """Check if adding dep as dependency of task would create a cycle."""
+    # Check if task is already a dependency of dep (direct or transitive)
+    visited = set()
+
+    def check(t: Task) -> bool:
+        if t is task:
+            return True
+        if id(t) in visited:
+            return False
+        visited.add(id(t))
+
+        if "depends" in t.metadata:
+            dep_task = find_task(task_file, t.metadata["depends"])
+            if dep_task and check(dep_task):
+                return True
+        return False
+
+    return check(dep)

@@ -1,7 +1,7 @@
 """Tests for task operations."""
 
 from quick_task.models import Task, TaskList, TaskFile, TaskStatus
-from quick_task.operations import add_task, update_status, move_task
+from quick_task.operations import add_task, update_status, move_task, link_dependency
 
 
 def make_empty_task_file():
@@ -167,3 +167,60 @@ def test_move_to_different_list():
     assert len(tf.lists[0].tasks) == 0
     assert len(tf.lists[1].tasks) == 1
     assert tf.lists[1].tasks[0].title == "My task"
+
+
+def test_link_dependency():
+    tf = TaskFile(
+        path="test.md",
+        lists=[
+            TaskList(
+                name="Tasks",
+                tasks=[
+                    Task(title="Task A", status=TaskStatus.TODO),
+                    Task(title="Task B", status=TaskStatus.TODO),
+                ],
+            )
+        ],
+    )
+    link_dependency(tf, "Task B", depends_on="Task A")
+    assert tf.lists[0].tasks[1].metadata["depends"] == "Task A"
+
+
+def test_link_dependency_with_bookmark():
+    tf = TaskFile(
+        path="test.md",
+        lists=[
+            TaskList(
+                name="Tasks",
+                tasks=[
+                    Task(title="Task A", status=TaskStatus.TODO, bookmark="a"),
+                    Task(title="Task B", status=TaskStatus.TODO),
+                ],
+            )
+        ],
+    )
+    link_dependency(tf, "Task B", depends_on="#a")
+    assert tf.lists[0].tasks[1].metadata["depends"] == "#a"
+
+
+def test_link_dependency_circular_detection():
+    import pytest
+    from quick_task.operations import CircularDependencyError
+
+    tf = TaskFile(
+        path="test.md",
+        lists=[
+            TaskList(
+                name="Tasks",
+                tasks=[
+                    Task(title="Task A", status=TaskStatus.TODO),
+                    Task(title="Task B", status=TaskStatus.TODO),
+                ],
+            )
+        ],
+    )
+    # A depends on B
+    link_dependency(tf, "Task A", depends_on="Task B")
+    # B depends on A would create a cycle
+    with pytest.raises(CircularDependencyError):
+        link_dependency(tf, "Task B", depends_on="Task A")
