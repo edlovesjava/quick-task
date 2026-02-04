@@ -1,0 +1,69 @@
+"""Tests for task operations."""
+
+from quick_task.models import Task, TaskList, TaskFile, TaskStatus
+from quick_task.operations import add_task
+
+
+def make_empty_task_file():
+    return TaskFile(
+        path="test.md",
+        lists=[TaskList(name="Tasks", tasks=[])],
+    )
+
+
+def make_task_file_with_tasks():
+    return TaskFile(
+        path="test.md",
+        lists=[
+            TaskList(
+                name="Tasks",
+                tasks=[
+                    Task(title="Existing task", status=TaskStatus.TODO),
+                ],
+            )
+        ],
+    )
+
+
+def test_add_task_to_empty_list():
+    tf = make_empty_task_file()
+    add_task(tf, "New task")
+    assert len(tf.lists[0].tasks) == 1
+    assert tf.lists[0].tasks[0].title == "New task"
+    assert tf.lists[0].tasks[0].status == TaskStatus.TODO
+
+
+def test_add_task_appends_to_end():
+    tf = make_task_file_with_tasks()
+    add_task(tf, "New task")
+    assert len(tf.lists[0].tasks) == 2
+    assert tf.lists[0].tasks[1].title == "New task"
+
+
+def test_add_task_to_named_list():
+    tf = TaskFile(
+        path="test.md",
+        lists=[
+            TaskList(name="Backlog", tasks=[]),
+            TaskList(name="Done", tasks=[]),
+        ],
+    )
+    add_task(tf, "New task", list_name="Done")
+    assert len(tf.lists[0].tasks) == 0
+    assert len(tf.lists[1].tasks) == 1
+
+
+def test_add_task_with_parent():
+    tf = TaskFile(
+        path="test.md",
+        lists=[
+            TaskList(
+                name="Tasks",
+                tasks=[Task(title="Parent task", status=TaskStatus.TODO)],
+            )
+        ],
+    )
+    add_task(tf, "Child task", parent_query="Parent")
+    assert len(tf.lists[0].tasks) == 1
+    assert len(tf.lists[0].tasks[0].children) == 1
+    assert tf.lists[0].tasks[0].children[0].title == "Child task"
