@@ -8,6 +8,7 @@ from quick_task.models import Task, TaskList, TaskFile, TaskStatus
 
 HEADER_PATTERN = re.compile(r"^(#{1,6})\s+(.+?)(?:\s+\[#([\w-]+)\])?\s*$")
 TASK_PATTERN = re.compile(r"^(\s*)- \[(.)\]\s+(.+?)(?:\s+\[#([\w-]+)\])?\s*$")
+METADATA_PATTERN = re.compile(r"^\s+([\w-]+):\s*(.+)\s*$")
 
 
 def parse_file(path: str | Path) -> TaskFile:
@@ -23,6 +24,7 @@ def parse_content(content: str, path: str | Path = "TASKS.md") -> TaskFile:
     lists: list[TaskList] = []
     current_list: TaskList | None = None
     task_stack: list[tuple[int, Task]] = []  # (indent_level, task)
+    current_task: Task | None = None
 
     for line in lines:
         # Check for header
@@ -33,6 +35,7 @@ def parse_content(content: str, path: str | Path = "TASKS.md") -> TaskFile:
             current_list = TaskList(name=name, bookmark=bookmark)
             lists.append(current_list)
             task_stack = []
+            current_task = None
             continue
 
         # Check for task
@@ -51,12 +54,19 @@ def parse_content(content: str, path: str | Path = "TASKS.md") -> TaskFile:
                 task_stack.pop()
 
             if task_stack:
-                # Add as child of top of stack
                 task_stack[-1][1].children.append(task)
             else:
-                # Top-level task
                 current_list.tasks.append(task)
 
             task_stack.append((indent, task))
+            current_task = task
+            continue
+
+        # Check for metadata (indented key: value)
+        metadata_match = METADATA_PATTERN.match(line)
+        if metadata_match and current_task is not None:
+            key = metadata_match.group(1)
+            value = metadata_match.group(2)
+            current_task.metadata[key] = value
 
     return TaskFile(path=path, lists=lists)

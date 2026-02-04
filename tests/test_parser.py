@@ -43,3 +43,16 @@ def test_parse_nested_tasks():
     assert parent.children[1].title == "Child 2"
     assert len(parent.children[1].children) == 1
     assert parent.children[1].children[0].title == "Grandchild"
+
+
+def test_parse_metadata_and_bookmarks():
+    task_file = parse_file(FIXTURES / "metadata.md")
+
+    assert task_file.lists[0].name == "Backlog"
+    assert task_file.lists[0].bookmark == "backlog"
+
+    tasks = task_file.lists[0].tasks
+    assert tasks[0].title == "Complex task"
+    assert tasks[0].bookmark == "complex"
+    assert tasks[0].metadata["depends"] == "Other task"
+    assert tasks[0].metadata["docs"] == "docs/spec.md"
