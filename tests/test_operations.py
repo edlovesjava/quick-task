@@ -1,7 +1,7 @@
 """Tests for task operations."""
 
 from quick_task.models import Task, TaskList, TaskFile, TaskStatus
-from quick_task.operations import add_task
+from quick_task.operations import add_task, update_status
 
 
 def make_empty_task_file():
@@ -67,3 +67,51 @@ def test_add_task_with_parent():
     assert len(tf.lists[0].tasks) == 1
     assert len(tf.lists[0].tasks[0].children) == 1
     assert tf.lists[0].tasks[0].children[0].title == "Child task"
+
+
+def test_update_status_done():
+    tf = TaskFile(
+        path="test.md",
+        lists=[
+            TaskList(
+                name="Tasks",
+                tasks=[Task(title="My task", status=TaskStatus.TODO)],
+            )
+        ],
+    )
+    update_status(tf, "My task", TaskStatus.DONE)
+    assert tf.lists[0].tasks[0].status == TaskStatus.DONE
+
+
+def test_done_cascades_to_children():
+    child = Task(title="Child", status=TaskStatus.TODO)
+    parent = Task(title="Parent", status=TaskStatus.TODO, children=[child])
+    tf = TaskFile(path="test.md", lists=[TaskList(name="Tasks", tasks=[parent])])
+
+    update_status(tf, "Parent", TaskStatus.DONE)
+
+    assert parent.status == TaskStatus.DONE
+    assert child.status == TaskStatus.DONE
+
+
+def test_children_complete_rolls_up_to_parent():
+    child1 = Task(title="Child 1", status=TaskStatus.DONE)
+    child2 = Task(title="Child 2", status=TaskStatus.TODO)
+    parent = Task(title="Parent", status=TaskStatus.TODO, children=[child1, child2])
+    tf = TaskFile(path="test.md", lists=[TaskList(name="Tasks", tasks=[parent])])
+
+    update_status(tf, "Child 2", TaskStatus.DONE)
+
+    assert child2.status == TaskStatus.DONE
+    assert parent.status == TaskStatus.DONE
+
+
+def test_cancel_cascades_to_children():
+    child = Task(title="Child", status=TaskStatus.TODO)
+    parent = Task(title="Parent", status=TaskStatus.TODO, children=[child])
+    tf = TaskFile(path="test.md", lists=[TaskList(name="Tasks", tasks=[parent])])
+
+    update_status(tf, "Parent", TaskStatus.CANCELLED)
+
+    assert parent.status == TaskStatus.CANCELLED
+    assert child.status == TaskStatus.CANCELLED
