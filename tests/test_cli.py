@@ -132,3 +132,39 @@ def test_block_command():
 
         content = Path("TASKS.md").read_text()
         assert "[?] My task" in content
+
+
+def test_move_before():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] First
+- [ ] Second
+- [ ] Third
+""")
+        result = runner.invoke(main, ["move", "Third", "--before", "First"])
+        assert result.exit_code == 0
+
+        content = Path("TASKS.md").read_text()
+        # Third should now be before First
+        assert content.index("Third") < content.index("First")
+
+
+def test_move_to_list():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Todo
+
+- [ ] My task
+
+## Done
+""")
+        result = runner.invoke(main, ["move", "My task", "--list", "Done"])
+        assert result.exit_code == 0
+
+        content = Path("TASKS.md").read_text()
+        # Task should be under Done now
+        done_idx = content.index("## Done")
+        task_idx = content.index("My task")
+        assert task_idx > done_idx
