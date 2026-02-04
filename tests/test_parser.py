@@ -25,3 +25,21 @@ def test_parse_simple_tasks():
 
     assert tasks[2].title == "In progress task"
     assert tasks[2].status == TaskStatus.IN_PROGRESS
+
+
+def test_parse_nested_tasks():
+    task_file = parse_file(FIXTURES / "nested.md")
+    tasks = task_file.lists[0].tasks
+
+    assert len(tasks) == 2  # Two top-level tasks
+
+    parent = tasks[0]
+    assert parent.title == "Parent task"
+    assert len(parent.children) == 2
+
+    assert parent.children[0].title == "Child 1"
+    assert parent.children[0].status == TaskStatus.DONE
+
+    assert parent.children[1].title == "Child 2"
+    assert len(parent.children[1].children) == 1
+    assert parent.children[1].children[0].title == "Grandchild"

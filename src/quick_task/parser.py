@@ -22,6 +22,7 @@ def parse_content(content: str, path: str | Path = "TASKS.md") -> TaskFile:
     lines = content.split("\n")
     lists: list[TaskList] = []
     current_list: TaskList | None = None
+    task_stack: list[tuple[int, Task]] = []  # (indent_level, task)
 
     for line in lines:
         # Check for header
@@ -31,6 +32,7 @@ def parse_content(content: str, path: str | Path = "TASKS.md") -> TaskFile:
             bookmark = header_match.group(3)
             current_list = TaskList(name=name, bookmark=bookmark)
             lists.append(current_list)
+            task_stack = []
             continue
 
         # Check for task
@@ -44,7 +46,17 @@ def parse_content(content: str, path: str | Path = "TASKS.md") -> TaskFile:
             status = TaskStatus.from_symbol(symbol)
             task = Task(title=title, status=status, bookmark=bookmark)
 
-            if indent == 0:
+            # Pop stack until we find parent at lower indent
+            while task_stack and task_stack[-1][0] >= indent:
+                task_stack.pop()
+
+            if task_stack:
+                # Add as child of top of stack
+                task_stack[-1][1].children.append(task)
+            else:
+                # Top-level task
                 current_list.tasks.append(task)
+
+            task_stack.append((indent, task))
 
     return TaskFile(path=path, lists=lists)
