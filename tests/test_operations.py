@@ -1,7 +1,7 @@
 """Tests for task operations."""
 
 from quick_task.models import Task, TaskList, TaskFile, TaskStatus
-from quick_task.operations import add_task, update_status
+from quick_task.operations import add_task, update_status, move_task
 
 
 def make_empty_task_file():
@@ -115,3 +115,55 @@ def test_cancel_cascades_to_children():
 
     assert parent.status == TaskStatus.CANCELLED
     assert child.status == TaskStatus.CANCELLED
+
+
+def test_move_before():
+    tf = TaskFile(
+        path="test.md",
+        lists=[
+            TaskList(
+                name="Tasks",
+                tasks=[
+                    Task(title="First", status=TaskStatus.TODO),
+                    Task(title="Second", status=TaskStatus.TODO),
+                    Task(title="Third", status=TaskStatus.TODO),
+                ],
+            )
+        ],
+    )
+    move_task(tf, "Third", before="First")
+    titles = [t.title for t in tf.lists[0].tasks]
+    assert titles == ["Third", "First", "Second"]
+
+
+def test_move_after():
+    tf = TaskFile(
+        path="test.md",
+        lists=[
+            TaskList(
+                name="Tasks",
+                tasks=[
+                    Task(title="First", status=TaskStatus.TODO),
+                    Task(title="Second", status=TaskStatus.TODO),
+                    Task(title="Third", status=TaskStatus.TODO),
+                ],
+            )
+        ],
+    )
+    move_task(tf, "First", after="Second")
+    titles = [t.title for t in tf.lists[0].tasks]
+    assert titles == ["Second", "First", "Third"]
+
+
+def test_move_to_different_list():
+    tf = TaskFile(
+        path="test.md",
+        lists=[
+            TaskList(name="Todo", tasks=[Task(title="My task", status=TaskStatus.DONE)]),
+            TaskList(name="Done", tasks=[]),
+        ],
+    )
+    move_task(tf, "My task", to_list="Done")
+    assert len(tf.lists[0].tasks) == 0
+    assert len(tf.lists[1].tasks) == 1
+    assert tf.lists[1].tasks[0].title == "My task"

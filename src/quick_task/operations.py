@@ -100,3 +100,57 @@ def rollup_if_children_done(task: Task) -> bool:
         task.status = TaskStatus.DONE
 
     return task.status == TaskStatus.DONE
+
+
+def move_task(
+    task_file: TaskFile,
+    query: str,
+    before: str | None = None,
+    after: str | None = None,
+    to_list: str | None = None,
+) -> Task:
+    """Move a task to a new position or list."""
+    task = find_task(task_file, query)
+    if task is None:
+        raise TaskNotFoundError(f"Task not found: {query}")
+
+    # Find and remove from current location
+    source_list = find_task_list(task_file, task)
+    if source_list is None:
+        raise TaskNotFoundError(f"Could not find task in any list: {query}")
+    source_list.tasks.remove(task)
+
+    # Determine target list
+    target_list = get_list(task_file, to_list) if to_list else source_list
+
+    # Determine position
+    if before:
+        target = find_task(task_file, before)
+        if target is None:
+            raise TaskNotFoundError(f"Target task not found: {before}")
+        try:
+            idx = target_list.tasks.index(target)
+        except ValueError:
+            raise TaskNotFoundError(f"Target task '{before}' not in target list")
+        target_list.tasks.insert(idx, task)
+    elif after:
+        target = find_task(task_file, after)
+        if target is None:
+            raise TaskNotFoundError(f"Target task not found: {after}")
+        try:
+            idx = target_list.tasks.index(target)
+        except ValueError:
+            raise TaskNotFoundError(f"Target task '{after}' not in target list")
+        target_list.tasks.insert(idx + 1, task)
+    else:
+        target_list.tasks.append(task)
+
+    return task
+
+
+def find_task_list(task_file: TaskFile, task: Task) -> TaskList | None:
+    """Find which list contains a task (top-level only)."""
+    for task_list in task_file.lists:
+        if task in task_list.tasks:
+            return task_list
+    return None
