@@ -90,3 +90,45 @@ def test_add_subtask():
 
         content = Path("TASKS.md").read_text()
         assert "Child task" in content
+
+
+def test_done_command():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] My task
+""")
+        result = runner.invoke(main, ["done", "My task"])
+        assert result.exit_code == 0
+
+        content = Path("TASKS.md").read_text()
+        assert "[x] My task" in content
+
+
+def test_start_command():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] My task
+""")
+        result = runner.invoke(main, ["start", "My task"])
+        assert result.exit_code == 0
+
+        content = Path("TASKS.md").read_text()
+        assert "[~] My task" in content
+
+
+def test_block_command():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] My task
+""")
+        result = runner.invoke(main, ["block", "My task"])
+        assert result.exit_code == 0
+
+        content = Path("TASKS.md").read_text()
+        assert "[?] My task" in content

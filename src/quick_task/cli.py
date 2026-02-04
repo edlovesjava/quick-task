@@ -9,7 +9,7 @@ from rich.table import Table
 from quick_task.discovery import find_task_file
 from quick_task.parser import parse_file
 from quick_task.models import TaskStatus
-from quick_task.operations import add_task as op_add_task
+from quick_task.operations import add_task as op_add_task, update_status
 from quick_task.writer import write_file
 
 
@@ -128,6 +128,41 @@ def add(ctx, title, list_name, parent_query):
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
         raise SystemExit(1)
+
+
+def make_status_command(name, status, verb, past_tense):
+    """Factory for status update commands."""
+
+    @main.command(name, help=f"{verb} a task.")
+    @click.argument("query")
+    @click.option("--force", is_flag=True, help="Force even with incomplete dependencies")
+    @click.pass_context
+    def command(ctx, query, force):
+        file_path = find_task_file(explicit_file=ctx.obj.get("file_path"))
+        if not file_path:
+            console.print("[red]No task file found[/red]")
+            raise SystemExit(1)
+
+        task_file = parse_file(file_path)
+
+        try:
+            task = update_status(task_file, query, status, force=force)
+            write_file(task_file)
+            console.print(f"[green]{past_tense}:[/green] {task.title}")
+        except Exception as e:
+            console.print(f"[red]Error:[/red] {e}")
+            raise SystemExit(1)
+
+    return command
+
+
+# Register status commands
+done = make_status_command("done", TaskStatus.DONE, "Mark complete", "Completed")
+start = make_status_command("start", TaskStatus.IN_PROGRESS, "Mark in-progress", "Started")
+block = make_status_command("block", TaskStatus.BLOCKED, "Mark blocked", "Blocked")
+defer = make_status_command("defer", TaskStatus.DEFERRED, "Mark deferred", "Deferred")
+cancel = make_status_command("cancel", TaskStatus.CANCELLED, "Mark cancelled", "Cancelled")
+reset = make_status_command("reset", TaskStatus.TODO, "Reset to todo", "Reset")
 
 
 if __name__ == "__main__":
