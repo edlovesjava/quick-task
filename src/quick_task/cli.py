@@ -9,6 +9,8 @@ from rich.table import Table
 from quick_task.discovery import find_task_file
 from quick_task.parser import parse_file
 from quick_task.models import TaskStatus
+from quick_task.operations import add_task as op_add_task
+from quick_task.writer import write_file
 
 
 console = Console()
@@ -103,6 +105,29 @@ def collect_with_list(list_name, tasks, depth):
     for task in tasks:
         yield {"task": task, "status": task.status, "list": list_name, "depth": depth}
         yield from collect_with_list(list_name, task.children, depth + 1)
+
+
+@main.command("add")
+@click.argument("title")
+@click.option("--list", "-l", "list_name", help="Target list name")
+@click.option("--parent", "-p", "parent_query", help="Parent task (creates subtask)")
+@click.pass_context
+def add(ctx, title, list_name, parent_query):
+    """Add a new task."""
+    file_path = find_task_file(explicit_file=ctx.obj.get("file_path"))
+    if not file_path:
+        console.print("[red]No task file found[/red]")
+        raise SystemExit(1)
+
+    task_file = parse_file(file_path)
+
+    try:
+        task = op_add_task(task_file, title, list_name=list_name, parent_query=parent_query)
+        write_file(task_file)
+        console.print(f"[green]Added:[/green] {task.title}")
+    except Exception as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
