@@ -27,9 +27,9 @@
     - [x] Remove task and its children from file
     - [x] Test: remove top-level task
     - [x] Test: remove subtask
-- [ ] Add rename command to update task title [#rename-cmd]
-    - [ ] CLI wiring: qt rename "old" "new title"
-    - [ ] Test: rename preserves status and children
+- [x] Add rename command to update task title [#rename-cmd]
+    - [x] CLI wiring: qt rename "old" "new title"
+    - [x] Test: rename preserves status and children
 - [ ] Improve list output formatting with Rich [#rich-output]
     - [ ] Color-code statuses
     - [ ] Show bookmark tags inline

@@ -13,7 +13,7 @@ from quick_task.discovery import find_task_file
 from quick_task.parser import parse_file
 from quick_task.models import TaskStatus
 from quick_task.matcher import find_task
-from quick_task.operations import add_task as op_add_task, update_status, move_task as op_move_task, link_dependency, link_doc, remove_task as op_remove_task
+from quick_task.operations import add_task as op_add_task, update_status, move_task as op_move_task, link_dependency, link_doc, remove_task as op_remove_task, rename_task as op_rename_task
 from quick_task.writer import write_file
 
 
@@ -153,6 +153,28 @@ def move(ctx, query, before, after, to_list):
         task = op_move_task(task_file, query, before=before, after=after, to_list=to_list)
         write_file(task_file)
         console.print(f"[green]Moved:[/green] {task.title}")
+    except Exception as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise SystemExit(1)
+
+
+@main.command("rename")
+@click.argument("query")
+@click.argument("new_title")
+@click.pass_context
+def rename(ctx, query, new_title):
+    """Rename a task."""
+    file_path = find_task_file(explicit_file=ctx.obj.get("file_path"))
+    if not file_path:
+        console.print("[red]No task file found[/red]")
+        raise SystemExit(1)
+
+    task_file = parse_file(file_path)
+
+    try:
+        task = op_rename_task(task_file, query, new_title)
+        write_file(task_file)
+        console.print(f"[green]Renamed:[/green] {task.title}")
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
         raise SystemExit(1)

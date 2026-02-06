@@ -313,6 +313,20 @@ def test_remove_task_not_found():
         remove_task(tf, "nonexistent")
 
 
+def test_rename_task():
+    from quick_task.operations import rename_task
+
+    child = Task(title="Child", status=TaskStatus.TODO)
+    task = Task(title="Old name", status=TaskStatus.IN_PROGRESS, bookmark="t", children=[child])
+    tf = TaskFile(path="test.md", lists=[TaskList(name="Tasks", tasks=[task])])
+
+    rename_task(tf, "Old name", "New name")
+    assert tf.lists[0].tasks[0].title == "New name"
+    assert tf.lists[0].tasks[0].status == TaskStatus.IN_PROGRESS
+    assert tf.lists[0].tasks[0].bookmark == "t"
+    assert len(tf.lists[0].tasks[0].children) == 1
+
+
 def test_link_dependency_circular_detection():
     import pytest
     from quick_task.operations import CircularDependencyError

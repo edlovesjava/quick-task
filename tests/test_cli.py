@@ -384,6 +384,24 @@ def test_remove_subtask_command():
         assert "Child B" in content
 
 
+def test_rename_command():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [~] Old name [#t]
+    - [ ] Child
+""")
+        result = runner.invoke(main, ["rename", "Old name", "New name"])
+        assert result.exit_code == 0
+
+        content = Path("TASKS.md").read_text()
+        assert "New name" in content
+        assert "Old name" not in content
+        assert "[#t]" in content
+        assert "Child" in content
+
+
 def test_init_creates_default_file():
     """init creates TASKS.md with default template."""
     runner = CliRunner()

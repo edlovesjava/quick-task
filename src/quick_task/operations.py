@@ -161,6 +161,19 @@ def find_task_list(task_file: TaskFile, task: Task) -> TaskList | None:
     return None
 
 
+def rename_task(
+    task_file: TaskFile,
+    query: str,
+    new_title: str,
+) -> Task:
+    """Rename a task."""
+    task = find_task(task_file, query)
+    if task is None:
+        raise TaskNotFoundError(f"Task not found: {query}")
+    task.title = new_title
+    return task
+
+
 def remove_task(
     task_file: TaskFile,
     query: str,
