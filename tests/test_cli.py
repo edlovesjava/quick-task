@@ -168,3 +168,54 @@ def test_move_to_list():
         done_idx = content.index("## Done")
         task_idx = content.index("My task")
         assert task_idx > done_idx
+
+
+def test_init_creates_default_file():
+    """init creates TASKS.md with default template."""
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(main, ["init"])
+        assert result.exit_code == 0
+
+        assert Path("TASKS.md").exists()
+        content = Path("TASKS.md").read_text()
+        assert "## Tasks" in content
+
+
+def test_init_kanban_template():
+    """init --template kanban creates kanban-style file."""
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(main, ["init", "--template", "kanban"])
+        assert result.exit_code == 0
+
+        content = Path("TASKS.md").read_text()
+        assert "## TODO" in content
+        assert "## In Progress" in content
+        assert "## Done" in content
+
+
+def test_init_refuses_if_file_exists():
+    """init refuses to overwrite existing file."""
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("existing content")
+        result = runner.invoke(main, ["init"])
+        assert result.exit_code == 1
+        assert "already exists" in result.output
+
+        # File unchanged
+        assert Path("TASKS.md").read_text() == "existing content"
+
+
+def test_init_force_overwrites():
+    """init --force overwrites existing file."""
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("existing content")
+        result = runner.invoke(main, ["init", "--force"])
+        assert result.exit_code == 0
+
+        content = Path("TASKS.md").read_text()
+        assert "## Tasks" in content
+        assert "existing content" not in content

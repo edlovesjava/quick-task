@@ -1,6 +1,7 @@
 """CLI entry point for Quick Task."""
 
 import json
+from pathlib import Path
 
 import click
 from rich.console import Console
@@ -187,6 +188,41 @@ block = make_status_command("block", TaskStatus.BLOCKED, "Mark blocked", "Blocke
 defer = make_status_command("defer", TaskStatus.DEFERRED, "Mark deferred", "Deferred")
 cancel = make_status_command("cancel", TaskStatus.CANCELLED, "Mark cancelled", "Cancelled")
 reset = make_status_command("reset", TaskStatus.TODO, "Reset to todo", "Reset")
+
+
+TEMPLATES = {
+    "simple": """## Tasks
+
+- [ ] First task
+""",
+    "kanban": """## TODO [#todo]
+
+## In Progress [#wip]
+
+## Done [#done]
+""",
+}
+
+
+@main.command("init")
+@click.option(
+    "--template", "-t",
+    type=click.Choice(["simple", "kanban"], case_sensitive=False),
+    default="simple",
+    help="Template to use",
+)
+@click.option("--force", is_flag=True, help="Overwrite existing file")
+def init(template, force):
+    """Initialize a new TASKS.md file."""
+    path = Path("TASKS.md")
+
+    if path.exists() and not force:
+        console.print("[red]TASKS.md already exists[/red] (use --force to overwrite)")
+        raise SystemExit(1)
+
+    content = TEMPLATES[template.lower()]
+    path.write_text(content)
+    console.print(f"[green]Created TASKS.md[/green] ({template} template)")
 
 
 if __name__ == "__main__":
