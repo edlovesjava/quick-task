@@ -65,8 +65,9 @@ def main(ctx, file_path):
 )
 @click.option("--list", "-l", "list_name", help="Filter by list name")
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
+@click.option("--verbose", "-v", is_flag=True, help="Show metadata")
 @click.pass_context
-def list_tasks(ctx, status, list_name, as_json):
+def list_tasks(ctx, status, list_name, as_json, verbose):
     """List tasks."""
     file_path = find_task_file(explicit_file=ctx.obj.get("file_path"))
     if not file_path:
@@ -113,9 +114,13 @@ def list_tasks(ctx, status, list_name, as_json):
             task_text = f"{indent}{t['task'].title}"
             if t["task"].bookmark:
                 task_text += f" [dim]\\[#{t['task'].bookmark}][/dim]"
-            meta_count = len(t["task"].metadata)
-            if meta_count:
-                task_text += f" [dim]({meta_count} meta)[/dim]"
+            if not verbose:
+                meta_count = len(t["task"].metadata)
+                if meta_count:
+                    task_text += f" [dim]({meta_count} meta)[/dim]"
+            if verbose and t["task"].metadata:
+                for key, value in t["task"].metadata.items():
+                    task_text += f"\n{indent}  [dim]{key}: {value}[/dim]"
             table.add_row(f"[{style}]{symbol}[/{style}]", task_text, t["list"])
 
         console.print(table)

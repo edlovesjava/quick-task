@@ -402,6 +402,21 @@ def test_rename_command():
         assert "Child" in content
 
 
+def test_list_verbose():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] My task [#my]
+    docs: docs/spec.md
+    notes: Important info
+""")
+        result = runner.invoke(main, ["list", "--verbose"])
+        assert result.exit_code == 0
+        assert "docs/spec.md" in result.output
+        assert "Important info" in result.output
+
+
 def test_init_creates_default_file():
     """init creates TASKS.md with default template."""
     runner = CliRunner()
