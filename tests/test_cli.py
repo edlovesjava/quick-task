@@ -350,6 +350,40 @@ def test_show_task_not_found():
         assert result.exit_code == 1
 
 
+def test_remove_command():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] Task A
+- [ ] Task B
+""")
+        result = runner.invoke(main, ["remove", "Task A"])
+        assert result.exit_code == 0
+
+        content = Path("TASKS.md").read_text()
+        assert "Task A" not in content
+        assert "Task B" in content
+
+
+def test_remove_subtask_command():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] Parent
+    - [ ] Child A
+    - [ ] Child B
+""")
+        result = runner.invoke(main, ["remove", "Child A"])
+        assert result.exit_code == 0
+
+        content = Path("TASKS.md").read_text()
+        assert "Child A" not in content
+        assert "Parent" in content
+        assert "Child B" in content
+
+
 def test_init_creates_default_file():
     """init creates TASKS.md with default template."""
     runner = CliRunner()

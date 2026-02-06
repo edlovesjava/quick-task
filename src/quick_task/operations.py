@@ -1,7 +1,7 @@
 """Task operations - add, update, move, etc."""
 
 from quick_task.models import Task, TaskList, TaskFile, TaskStatus
-from quick_task.matcher import find_task
+from quick_task.matcher import find_task, all_tasks
 
 
 class TaskNotFoundError(Exception):
@@ -159,6 +159,32 @@ def find_task_list(task_file: TaskFile, task: Task) -> TaskList | None:
         if task in task_list.tasks:
             return task_list
     return None
+
+
+def remove_task(
+    task_file: TaskFile,
+    query: str,
+) -> str:
+    """Remove a task from the task file. Returns the removed task's title."""
+    task = find_task(task_file, query)
+    if task is None:
+        raise TaskNotFoundError(f"Task not found: {query}")
+
+    title = task.title
+
+    # Try removing from top-level lists
+    for task_list in task_file.lists:
+        if task in task_list.tasks:
+            task_list.tasks.remove(task)
+            return title
+
+    # Try removing from children
+    for t in all_tasks(task_file):
+        if task in t.children:
+            t.children.remove(task)
+            return title
+
+    raise TaskNotFoundError(f"Could not remove task: {query}")
 
 
 def link_dependency(

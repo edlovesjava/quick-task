@@ -269,6 +269,50 @@ def test_link_doc_no_duplicates():
     assert tf.lists[0].tasks[0].metadata["docs"] == "docs/design.md"
 
 
+def test_remove_top_level_task():
+    from quick_task.operations import remove_task
+
+    tf = TaskFile(
+        path="test.md",
+        lists=[
+            TaskList(
+                name="Tasks",
+                tasks=[
+                    Task(title="Task A", status=TaskStatus.TODO),
+                    Task(title="Task B", status=TaskStatus.TODO),
+                ],
+            )
+        ],
+    )
+    remove_task(tf, "Task A")
+    assert len(tf.lists[0].tasks) == 1
+    assert tf.lists[0].tasks[0].title == "Task B"
+
+
+def test_remove_subtask():
+    from quick_task.operations import remove_task
+
+    child = Task(title="Child", status=TaskStatus.TODO)
+    parent = Task(title="Parent", status=TaskStatus.TODO, children=[child])
+    tf = TaskFile(path="test.md", lists=[TaskList(name="Tasks", tasks=[parent])])
+
+    remove_task(tf, "Child")
+    assert len(tf.lists[0].tasks) == 1
+    assert len(tf.lists[0].tasks[0].children) == 0
+
+
+def test_remove_task_not_found():
+    import pytest
+    from quick_task.operations import remove_task, TaskNotFoundError
+
+    tf = TaskFile(
+        path="test.md",
+        lists=[TaskList(name="Tasks", tasks=[])],
+    )
+    with pytest.raises(TaskNotFoundError):
+        remove_task(tf, "nonexistent")
+
+
 def test_link_dependency_circular_detection():
     import pytest
     from quick_task.operations import CircularDependencyError

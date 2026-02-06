@@ -23,10 +23,10 @@
     - [x] Show title, status, bookmark, metadata, children
     - [x] Show linked docs and dependencies
     - [x] Support --json flag
-- [ ] Add remove command to delete tasks [#remove-cmd]
-    - [ ] Remove task and its children from file
-    - [ ] Test: remove top-level task
-    - [ ] Test: remove subtask
+- [x] Add remove command to delete tasks [#remove-cmd]
+    - [x] Remove task and its children from file
+    - [x] Test: remove top-level task
+    - [x] Test: remove subtask
 - [ ] Add rename command to update task title [#rename-cmd]
     - [ ] CLI wiring: qt rename "old" "new title"
     - [ ] Test: rename preserves status and children
