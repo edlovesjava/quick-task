@@ -30,10 +30,10 @@
 - [x] Add rename command to update task title [#rename-cmd]
     - [x] CLI wiring: qt rename "old" "new title"
     - [x] Test: rename preserves status and children
-- [ ] Improve list output formatting with Rich [#rich-output]
-    - [ ] Color-code statuses
-    - [ ] Show bookmark tags inline
-    - [ ] Show metadata counts
+- [x] Improve list output formatting with Rich [#rich-output]
+    - [x] Color-code statuses
+    - [x] Show bookmark tags inline
+    - [x] Show metadata counts
 - [ ] Add --verbose flag to list for showing metadata [#list-verbose]
 - [ ] Improve error messages for ambiguous matches [#ambiguous-errors]
     - [ ] Show all matching tasks when query is ambiguous

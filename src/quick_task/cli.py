@@ -28,6 +28,15 @@ STATUS_SYMBOLS = {
     TaskStatus.DEFERRED: "[>]",
 }
 
+STATUS_STYLES = {
+    TaskStatus.TODO: "white",
+    TaskStatus.IN_PROGRESS: "cyan",
+    TaskStatus.DONE: "green",
+    TaskStatus.CANCELLED: "dim",
+    TaskStatus.BLOCKED: "red",
+    TaskStatus.DEFERRED: "yellow",
+}
+
 STATUS_NAMES = {
     "todo": TaskStatus.TODO,
     "in-progress": TaskStatus.IN_PROGRESS,
@@ -97,9 +106,17 @@ def list_tasks(ctx, status, list_name, as_json):
         table.add_column("List")
 
         for t in tasks:
-            symbol = STATUS_SYMBOLS[t["status"]]
+            status = t["status"]
+            style = STATUS_STYLES[status]
+            symbol = STATUS_SYMBOLS[status]
             indent = "  " * t["depth"]
-            table.add_row(symbol, f"{indent}{t['task'].title}", t["list"])
+            task_text = f"{indent}{t['task'].title}"
+            if t["task"].bookmark:
+                task_text += f" [dim]\\[#{t['task'].bookmark}][/dim]"
+            meta_count = len(t["task"].metadata)
+            if meta_count:
+                task_text += f" [dim]({meta_count} meta)[/dim]"
+            table.add_row(f"[{style}]{symbol}[/{style}]", task_text, t["list"])
 
         console.print(table)
 
