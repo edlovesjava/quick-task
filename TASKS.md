@@ -12,9 +12,9 @@
 - [x] Add note command for task metadata [#note-cmd]
     - [x] CLI wiring: qt note "Task" "Some info"
     - [x] Test: note adds metadata to task
-- [ ] Add edit command to open file in $EDITOR [#edit-cmd]
-    - [ ] CLI wiring: qt edit "Task"
-    - [ ] Test: edit finds task and opens file
+- [x] Add edit command to open file in $EDITOR [#edit-cmd]
+    - [x] CLI wiring: qt edit "Task"
+    - [x] Test: edit finds task and opens file
 - [ ] Add integration tests for full workflows [#integration-tests]
     - [ ] Test: add -> start -> subtask -> done -> rollup
     - [ ] Test: dependency linking workflow

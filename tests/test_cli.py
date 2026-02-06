@@ -274,6 +274,32 @@ def test_note_command_appends():
         assert "Second note" in content
 
 
+def test_edit_opens_file(monkeypatch):
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] My task
+""")
+        # Use 'true' as editor (no-op that exits 0)
+        monkeypatch.setenv("EDITOR", "true")
+        result = runner.invoke(main, ["edit"])
+        assert result.exit_code == 0
+
+
+def test_edit_with_query_validates_task(monkeypatch):
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] My task
+""")
+        monkeypatch.setenv("EDITOR", "true")
+        result = runner.invoke(main, ["edit", "--task", "nonexistent"])
+        assert result.exit_code == 1
+        assert "not found" in result.output.lower()
+
+
 def test_init_creates_default_file():
     """init creates TASKS.md with default template."""
     runner = CliRunner()

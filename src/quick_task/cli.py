@@ -1,6 +1,8 @@
 """CLI entry point for Quick Task."""
 
 import json
+import os
+import subprocess
 from pathlib import Path
 
 import click
@@ -218,6 +220,27 @@ def note(ctx, query, text):
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
         raise SystemExit(1)
+
+
+@main.command("edit")
+@click.option("--task", "-t", "query", help="Task to find in the file")
+@click.pass_context
+def edit(ctx, query):
+    """Open the task file in $EDITOR."""
+    file_path = find_task_file(explicit_file=ctx.obj.get("file_path"))
+    if not file_path:
+        console.print("[red]No task file found[/red]")
+        raise SystemExit(1)
+
+    if query:
+        task_file = parse_file(file_path)
+        task = find_task(task_file, query)
+        if task is None:
+            console.print(f"[red]Task not found:[/red] {query}")
+            raise SystemExit(1)
+
+    editor = os.environ.get("EDITOR", "vi")
+    subprocess.run([editor, str(file_path)])
 
 
 def make_status_command(name, status, verb, past_tense):
