@@ -19,10 +19,10 @@
     - [x] Test: add -> start -> subtask -> done -> rollup
     - [x] Test: dependency linking workflow
     - [x] Test: doc linking and show workflow
-- [ ] Add show command to display single task detail [#show-cmd]
-    - [ ] Show title, status, bookmark, metadata, children
-    - [ ] Show linked docs and dependencies
-    - [ ] Support --json flag
+- [x] Add show command to display single task detail [#show-cmd]
+    - [x] Show title, status, bookmark, metadata, children
+    - [x] Show linked docs and dependencies
+    - [x] Support --json flag
 - [ ] Add remove command to delete tasks [#remove-cmd]
     - [ ] Remove task and its children from file
     - [ ] Test: remove top-level task

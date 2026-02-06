@@ -158,6 +158,55 @@ def move(ctx, query, before, after, to_list):
         raise SystemExit(1)
 
 
+@main.command("show")
+@click.argument("query")
+@click.option("--json", "as_json", is_flag=True, help="Output as JSON")
+@click.pass_context
+def show(ctx, query, as_json):
+    """Show detail for a single task."""
+    file_path = find_task_file(explicit_file=ctx.obj.get("file_path"))
+    if not file_path:
+        console.print("[red]No task file found[/red]")
+        raise SystemExit(1)
+
+    task_file = parse_file(file_path)
+    task = find_task(task_file, query)
+    if task is None:
+        console.print(f"[red]Task not found:[/red] {query}")
+        raise SystemExit(1)
+
+    if as_json:
+        data = task_to_dict(task)
+        click.echo(json.dumps(data, indent=2))
+    else:
+        symbol = STATUS_SYMBOLS[task.status]
+        title_line = f"{symbol} {task.title}"
+        if task.bookmark:
+            title_line += f" [#{task.bookmark}]"
+        console.print(title_line)
+        console.print(f"Status: {task.status.name.lower()}")
+        if task.metadata:
+            for key, value in task.metadata.items():
+                console.print(f"{key}: {value}")
+        if task.children:
+            console.print("Subtasks:")
+            for child in task.children:
+                child_symbol = STATUS_SYMBOLS[child.status]
+                console.print(f"  {child_symbol} {child.title}")
+
+
+def task_to_dict(task):
+    """Convert a task to a JSON-serializable dict."""
+    data = {
+        "title": task.title,
+        "status": task.status.name.lower(),
+        "bookmark": task.bookmark,
+        "metadata": dict(task.metadata),
+        "children": [task_to_dict(c) for c in task.children],
+    }
+    return data
+
+
 @main.command("link")
 @click.argument("query")
 @click.option("--depends", "-d", "depends_on", help="Task this depends on")

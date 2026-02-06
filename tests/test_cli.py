@@ -300,6 +300,56 @@ def test_edit_with_query_validates_task(monkeypatch):
         assert "not found" in result.output.lower()
 
 
+def test_show_task_detail():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [~] Auth system [#auth]
+    depends: #db
+    docs: docs/design.md, docs/plan.md#auth
+    notes: Using JWT tokens
+    - [x] Create login form
+    - [ ] Add validation
+""")
+        result = runner.invoke(main, ["show", "#auth"])
+        assert result.exit_code == 0
+        assert "Auth system" in result.output
+        assert "#auth" in result.output
+        assert "in-progress" in result.output.lower() or "in_progress" in result.output.lower()
+        assert "docs/design.md" in result.output
+        assert "Using JWT" in result.output
+        assert "Create login form" in result.output
+
+
+def test_show_task_json():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] My task [#my]
+    docs: docs/spec.md
+""")
+        result = runner.invoke(main, ["show", "#my", "--json"])
+        assert result.exit_code == 0
+        import json
+        data = json.loads(result.output)
+        assert data["title"] == "My task"
+        assert data["bookmark"] == "my"
+        assert "docs/spec.md" in data["metadata"]["docs"]
+
+
+def test_show_task_not_found():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] My task
+""")
+        result = runner.invoke(main, ["show", "nonexistent"])
+        assert result.exit_code == 1
+
+
 def test_init_creates_default_file():
     """init creates TASKS.md with default template."""
     runner = CliRunner()
