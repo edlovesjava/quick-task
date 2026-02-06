@@ -1,9 +1,14 @@
 ## Backlog [#backlog]
 
-- [ ] Add link command for task dependencies [#link-cmd]
-    - [ ] CLI wiring: qt link "Task B" --depends "Task A"
-    - [ ] Test: link creates depends metadata
-    - [ ] Test: link with bookmark reference
+- [x] Add link command for task and doc references [#link-cmd]
+    - [x] qt link "Task B" --depends "Task A" for task dependencies
+    - [x] qt link "Task" --doc "docs/design.md" to attach a doc reference
+    - [x] qt link "Task" --doc "docs/plan.md#section" for doc section links
+    - [x] Support multiple docs per task (docs metadata as comma-separated or list)
+    - [x] Test: link creates depends metadata
+    - [x] Test: link with bookmark reference
+    - [x] Test: link --doc adds docs metadata
+    - [x] Test: link --doc appends to existing docs
 - [ ] Add note command for task metadata [#note-cmd]
     - [ ] CLI wiring: qt note "Task" "Some info"
     - [ ] Test: note adds metadata to task
@@ -13,8 +18,10 @@
 - [ ] Add integration tests for full workflows [#integration-tests]
     - [ ] Test: add -> start -> subtask -> done -> rollup
     - [ ] Test: dependency linking workflow
+    - [ ] Test: doc linking and show workflow
 - [ ] Add show command to display single task detail [#show-cmd]
     - [ ] Show title, status, bookmark, metadata, children
+    - [ ] Show linked docs and dependencies
     - [ ] Support --json flag
 - [ ] Add remove command to delete tasks [#remove-cmd]
     - [ ] Remove task and its children from file
@@ -31,7 +38,6 @@
 - [ ] Improve error messages for ambiguous matches [#ambiguous-errors]
     - [ ] Show all matching tasks when query is ambiguous
     - [ ] Suggest using bookmarks for precision
-
 ## Done [#done]
 
 - [x] Project setup

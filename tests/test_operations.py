@@ -203,6 +203,72 @@ def test_link_dependency_with_bookmark():
     assert tf.lists[0].tasks[1].metadata["depends"] == "#a"
 
 
+def test_link_doc():
+    from quick_task.operations import link_doc
+
+    tf = TaskFile(
+        path="test.md",
+        lists=[
+            TaskList(
+                name="Tasks",
+                tasks=[Task(title="Auth system", status=TaskStatus.TODO)],
+            )
+        ],
+    )
+    link_doc(tf, "Auth system", "docs/auth-spec.md")
+    assert tf.lists[0].tasks[0].metadata["docs"] == "docs/auth-spec.md"
+
+
+def test_link_doc_appends():
+    from quick_task.operations import link_doc
+
+    task = Task(
+        title="Auth system",
+        status=TaskStatus.TODO,
+        metadata={"docs": "docs/design.md"},
+    )
+    tf = TaskFile(
+        path="test.md",
+        lists=[TaskList(name="Tasks", tasks=[task])],
+    )
+    link_doc(tf, "Auth system", "docs/auth-spec.md")
+    assert "docs/design.md" in tf.lists[0].tasks[0].metadata["docs"]
+    assert "docs/auth-spec.md" in tf.lists[0].tasks[0].metadata["docs"]
+
+
+def test_link_doc_with_section():
+    from quick_task.operations import link_doc
+
+    tf = TaskFile(
+        path="test.md",
+        lists=[
+            TaskList(
+                name="Tasks",
+                tasks=[Task(title="Auth system", status=TaskStatus.TODO)],
+            )
+        ],
+    )
+    link_doc(tf, "Auth system", "docs/plan.md#cli-commands")
+    assert tf.lists[0].tasks[0].metadata["docs"] == "docs/plan.md#cli-commands"
+
+
+def test_link_doc_no_duplicates():
+    from quick_task.operations import link_doc
+
+    task = Task(
+        title="Auth system",
+        status=TaskStatus.TODO,
+        metadata={"docs": "docs/design.md"},
+    )
+    tf = TaskFile(
+        path="test.md",
+        lists=[TaskList(name="Tasks", tasks=[task])],
+    )
+    link_doc(tf, "Auth system", "docs/design.md")
+    # Should not duplicate
+    assert tf.lists[0].tasks[0].metadata["docs"] == "docs/design.md"
+
+
 def test_link_dependency_circular_detection():
     import pytest
     from quick_task.operations import CircularDependencyError

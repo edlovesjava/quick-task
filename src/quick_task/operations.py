@@ -185,6 +185,28 @@ def link_dependency(
     return task
 
 
+def link_doc(
+    task_file: TaskFile,
+    query: str,
+    doc_path: str,
+) -> Task:
+    """Add a doc reference to a task."""
+    task = find_task(task_file, query)
+    if task is None:
+        raise TaskNotFoundError(f"Task not found: {query}")
+
+    existing = task.metadata.get("docs", "")
+    if existing:
+        # Check for duplicates
+        existing_docs = [d.strip() for d in existing.split(",")]
+        if doc_path not in existing_docs:
+            task.metadata["docs"] = f"{existing}, {doc_path}"
+    else:
+        task.metadata["docs"] = doc_path
+
+    return task
+
+
 def would_create_cycle(task_file: TaskFile, task: Task, dep: Task) -> bool:
     """Check if adding dep as dependency of task would create a cycle."""
     # Check if task is already a dependency of dep (direct or transitive)

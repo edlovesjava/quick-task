@@ -170,6 +170,80 @@ def test_move_to_list():
         assert task_idx > done_idx
 
 
+def test_link_depends():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] Task A
+- [ ] Task B
+""")
+        result = runner.invoke(main, ["link", "Task B", "--depends", "Task A"])
+        assert result.exit_code == 0
+
+        content = Path("TASKS.md").read_text()
+        assert "depends: Task A" in content
+
+
+def test_link_depends_with_bookmark():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] Task A [#a]
+- [ ] Task B
+""")
+        result = runner.invoke(main, ["link", "Task B", "--depends", "#a"])
+        assert result.exit_code == 0
+
+        content = Path("TASKS.md").read_text()
+        assert "depends: #a" in content
+
+
+def test_link_doc():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] Auth system
+""")
+        result = runner.invoke(main, ["link", "Auth system", "--doc", "docs/auth-spec.md"])
+        assert result.exit_code == 0
+
+        content = Path("TASKS.md").read_text()
+        assert "docs: docs/auth-spec.md" in content
+
+
+def test_link_doc_appends():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] Auth system
+    docs: docs/design.md
+""")
+        result = runner.invoke(main, ["link", "Auth system", "--doc", "docs/spec.md"])
+        assert result.exit_code == 0
+
+        content = Path("TASKS.md").read_text()
+        assert "docs/design.md" in content
+        assert "docs/spec.md" in content
+
+
+def test_link_doc_with_section():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] Auth system
+""")
+        result = runner.invoke(main, ["link", "Auth system", "--doc", "docs/plan.md#cli-commands"])
+        assert result.exit_code == 0
+
+        content = Path("TASKS.md").read_text()
+        assert "docs: docs/plan.md#cli-commands" in content
+
+
 def test_init_creates_default_file():
     """init creates TASKS.md with default template."""
     runner = CliRunner()

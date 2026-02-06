@@ -10,7 +10,7 @@ from rich.table import Table
 from quick_task.discovery import find_task_file
 from quick_task.parser import parse_file
 from quick_task.models import TaskStatus
-from quick_task.operations import add_task as op_add_task, update_status, move_task as op_move_task
+from quick_task.operations import add_task as op_add_task, update_status, move_task as op_move_task, link_dependency, link_doc
 from quick_task.writer import write_file
 
 
@@ -150,6 +150,38 @@ def move(ctx, query, before, after, to_list):
         task = op_move_task(task_file, query, before=before, after=after, to_list=to_list)
         write_file(task_file)
         console.print(f"[green]Moved:[/green] {task.title}")
+    except Exception as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise SystemExit(1)
+
+
+@main.command("link")
+@click.argument("query")
+@click.option("--depends", "-d", "depends_on", help="Task this depends on")
+@click.option("--doc", "doc_path", help="Doc path to link (e.g. docs/spec.md or docs/plan.md#section)")
+@click.pass_context
+def link(ctx, query, depends_on, doc_path):
+    """Link a task to a dependency or document."""
+    if not depends_on and not doc_path:
+        console.print("[red]Error:[/red] Provide --depends or --doc")
+        raise SystemExit(1)
+
+    file_path = find_task_file(explicit_file=ctx.obj.get("file_path"))
+    if not file_path:
+        console.print("[red]No task file found[/red]")
+        raise SystemExit(1)
+
+    task_file = parse_file(file_path)
+
+    try:
+        if depends_on:
+            task = link_dependency(task_file, query, depends_on)
+            write_file(task_file)
+            console.print(f"[green]Linked:[/green] {task.title} depends on {depends_on}")
+        if doc_path:
+            task = link_doc(task_file, query, doc_path)
+            write_file(task_file)
+            console.print(f"[green]Linked:[/green] {task.title} -> {doc_path}")
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
         raise SystemExit(1)
