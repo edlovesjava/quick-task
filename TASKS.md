@@ -38,6 +38,14 @@
 - [x] Improve error messages for ambiguous matches [#ambiguous-errors]
     - [x] Show all matching tasks when query is ambiguous
     - [x] Suggest using bookmarks for precision
+- [x] Add check command for task file validation [#check-cmd]
+    - [x] Detect malformed task lines (near-miss patterns)
+    - [x] Report unknown status symbols
+    - [x] Find duplicate bookmarks
+    - [x] Validate depends references point to existing tasks/bookmarks
+    - [x] Detect orphaned metadata (key: value not under a task)
+    - [x] Support --json flag for tooling integration
+    - [x] Exit code 0 if clean, 1 if errors found
 ## Done [#done]
 
 - [x] Project setup

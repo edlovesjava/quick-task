@@ -417,6 +417,49 @@ def test_list_verbose():
         assert "Important info" in result.output
 
 
+def test_check_clean_file():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] Valid task [#valid]
+- [x] Done task
+""")
+        result = runner.invoke(main, ["check"])
+        assert result.exit_code == 0
+        assert "No issues" in result.output
+
+
+def test_check_finds_errors():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [] Malformed
+- [ ] Task A [#dupe]
+- [ ] Task B [#dupe]
+""")
+        result = runner.invoke(main, ["check"])
+        assert result.exit_code == 1
+        assert "malformed" in result.output.lower()
+        assert "duplicate" in result.output.lower()
+
+
+def test_check_json_output():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [] Bad task
+""")
+        result = runner.invoke(main, ["check", "--json"])
+        assert result.exit_code == 1
+        import json
+        data = json.loads(result.output)
+        assert len(data) >= 1
+        assert data[0]["code"] == "malformed-task"
+
+
 def test_init_creates_default_file():
     """init creates TASKS.md with default template."""
     runner = CliRunner()

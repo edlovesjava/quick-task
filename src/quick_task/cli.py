@@ -13,6 +13,7 @@ from quick_task.discovery import find_task_file
 from quick_task.parser import parse_file
 from quick_task.models import TaskStatus
 from quick_task.matcher import find_task
+from quick_task.checker import check_file
 from quick_task.operations import add_task as op_add_task, update_status, move_task as op_move_task, link_dependency, link_doc, remove_task as op_remove_task, rename_task as op_rename_task
 from quick_task.writer import write_file
 
@@ -177,6 +178,35 @@ def move(ctx, query, before, after, to_list):
         console.print(f"[green]Moved:[/green] {task.title}")
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
+        raise SystemExit(1)
+
+
+@main.command("check")
+@click.option("--json", "as_json", is_flag=True, help="Output as JSON")
+@click.pass_context
+def check(ctx, as_json):
+    """Validate the task file for errors."""
+    file_path = find_task_file(explicit_file=ctx.obj.get("file_path"))
+    if not file_path:
+        console.print("[red]No task file found[/red]")
+        raise SystemExit(1)
+
+    issues = check_file(file_path)
+
+    if as_json:
+        output = [
+            {"line": i.line, "level": i.level, "code": i.code, "message": i.message}
+            for i in issues
+        ]
+        click.echo(json.dumps(output, indent=2))
+    elif issues:
+        for issue in issues:
+            level_style = "red" if issue.level == "error" else "yellow"
+            console.print(f"[{level_style}]{issue.level}[/{level_style}] line {issue.line}: {issue.message}")
+    else:
+        console.print("[green]No issues found[/green]")
+
+    if any(i.level == "error" for i in issues):
         raise SystemExit(1)
 
 
