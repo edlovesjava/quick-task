@@ -9,9 +9,9 @@
     - [x] Test: link with bookmark reference
     - [x] Test: link --doc adds docs metadata
     - [x] Test: link --doc appends to existing docs
-- [ ] Add note command for task metadata [#note-cmd]
-    - [ ] CLI wiring: qt note "Task" "Some info"
-    - [ ] Test: note adds metadata to task
+- [x] Add note command for task metadata [#note-cmd]
+    - [x] CLI wiring: qt note "Task" "Some info"
+    - [x] Test: note adds metadata to task
 - [ ] Add edit command to open file in $EDITOR [#edit-cmd]
     - [ ] CLI wiring: qt edit "Task"
     - [ ] Test: edit finds task and opens file

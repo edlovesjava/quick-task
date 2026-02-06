@@ -10,6 +10,7 @@ from rich.table import Table
 from quick_task.discovery import find_task_file
 from quick_task.parser import parse_file
 from quick_task.models import TaskStatus
+from quick_task.matcher import find_task
 from quick_task.operations import add_task as op_add_task, update_status, move_task as op_move_task, link_dependency, link_doc
 from quick_task.writer import write_file
 
@@ -182,6 +183,38 @@ def link(ctx, query, depends_on, doc_path):
             task = link_doc(task_file, query, doc_path)
             write_file(task_file)
             console.print(f"[green]Linked:[/green] {task.title} -> {doc_path}")
+    except Exception as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise SystemExit(1)
+
+
+@main.command("note")
+@click.argument("query")
+@click.argument("text")
+@click.pass_context
+def note(ctx, query, text):
+    """Add a note to a task."""
+    file_path = find_task_file(explicit_file=ctx.obj.get("file_path"))
+    if not file_path:
+        console.print("[red]No task file found[/red]")
+        raise SystemExit(1)
+
+    task_file = parse_file(file_path)
+
+    try:
+        task = find_task(task_file, query)
+        if task is None:
+            console.print(f"[red]Task not found:[/red] {query}")
+            raise SystemExit(1)
+        existing = task.metadata.get("notes", "")
+        if existing:
+            task.metadata["notes"] = f"{existing}; {text}"
+        else:
+            task.metadata["notes"] = text
+        write_file(task_file)
+        console.print(f"[green]Added note to:[/green] {task.title}")
+    except SystemExit:
+        raise
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
         raise SystemExit(1)

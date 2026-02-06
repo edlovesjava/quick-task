@@ -244,6 +244,36 @@ def test_link_doc_with_section():
         assert "docs: docs/plan.md#cli-commands" in content
 
 
+def test_note_command():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] My task
+""")
+        result = runner.invoke(main, ["note", "My task", "Some extra info"])
+        assert result.exit_code == 0
+
+        content = Path("TASKS.md").read_text()
+        assert "notes: Some extra info" in content
+
+
+def test_note_command_appends():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] My task
+    notes: First note
+""")
+        result = runner.invoke(main, ["note", "My task", "Second note"])
+        assert result.exit_code == 0
+
+        content = Path("TASKS.md").read_text()
+        assert "First note" in content
+        assert "Second note" in content
+
+
 def test_init_creates_default_file():
     """init creates TASKS.md with default template."""
     runner = CliRunner()
