@@ -15,10 +15,10 @@
 - [x] Add edit command to open file in $EDITOR [#edit-cmd]
     - [x] CLI wiring: qt edit "Task"
     - [x] Test: edit finds task and opens file
-- [ ] Add integration tests for full workflows [#integration-tests]
-    - [ ] Test: add -> start -> subtask -> done -> rollup
-    - [ ] Test: dependency linking workflow
-    - [ ] Test: doc linking and show workflow
+- [x] Add integration tests for full workflows [#integration-tests]
+    - [x] Test: add -> start -> subtask -> done -> rollup
+    - [x] Test: dependency linking workflow
+    - [x] Test: doc linking and show workflow
 - [ ] Add show command to display single task detail [#show-cmd]
     - [ ] Show title, status, bookmark, metadata, children
     - [ ] Show linked docs and dependencies
