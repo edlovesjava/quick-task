@@ -64,6 +64,28 @@ def test_find_multiple_matches():
     assert len(tasks) == 1
 
 
+def test_ambiguous_raises():
+    import pytest
+    from quick_task.matcher import AmbiguousMatchError
+
+    tf = TaskFile(
+        path="test.md",
+        lists=[
+            TaskList(
+                name="Tasks",
+                tasks=[
+                    Task(title="Build API server", status=TaskStatus.TODO, bookmark="api"),
+                    Task(title="Build API client", status=TaskStatus.TODO),
+                ],
+            )
+        ],
+    )
+    with pytest.raises(AmbiguousMatchError) as exc_info:
+        find_task(tf, "Build API")
+    assert len(exc_info.value.matches) == 2
+    assert "bookmark" in str(exc_info.value).lower()
+
+
 def test_no_match_returns_none():
     tf = make_task_file()
     task = find_task(tf, "nonexistent")

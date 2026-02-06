@@ -35,9 +35,9 @@
     - [x] Show bookmark tags inline
     - [x] Show metadata counts
 - [x] Add --verbose flag to list for showing metadata [#list-verbose]
-- [ ] Improve error messages for ambiguous matches [#ambiguous-errors]
-    - [ ] Show all matching tasks when query is ambiguous
-    - [ ] Suggest using bookmarks for precision
+- [x] Improve error messages for ambiguous matches [#ambiguous-errors]
+    - [x] Show all matching tasks when query is ambiguous
+    - [x] Suggest using bookmarks for precision
 ## Done [#done]
 
 - [x] Project setup
