@@ -9,13 +9,22 @@ import click
 from rich.console import Console
 from rich.table import Table
 
+from quick_task.api import (
+    load_file,
+    save,
+    get_task,
+    add_task as op_add_task,
+    update_status,
+    move_task as op_move_task,
+    remove_task as op_remove_task,
+    rename_task as op_rename_task,
+    link_dependency,
+    link_doc,
+    check_file,
+    TaskStatus,
+    TaskNotFoundError,
+)
 from quick_task.discovery import find_task_file
-from quick_task.parser import parse_file
-from quick_task.models import TaskStatus
-from quick_task.matcher import find_task
-from quick_task.checker import check_file
-from quick_task.operations import add_task as op_add_task, update_status, move_task as op_move_task, link_dependency, link_doc, remove_task as op_remove_task, rename_task as op_rename_task
-from quick_task.writer import write_file
 
 
 console = Console()
@@ -48,6 +57,15 @@ STATUS_NAMES = {
 }
 
 
+def _load(ctx):
+    """Load task file from CLI context, exiting on failure."""
+    try:
+        return load_file(ctx.obj.get("file_path"))
+    except FileNotFoundError:
+        console.print("[red]No task file found[/red]")
+        raise SystemExit(1)
+
+
 @click.group()
 @click.version_option()
 @click.option("--file", "-f", "file_path", help="Task file to use")
@@ -70,12 +88,7 @@ def main(ctx, file_path):
 @click.pass_context
 def list_tasks(ctx, status, list_name, as_json, verbose):
     """List tasks."""
-    file_path = find_task_file(explicit_file=ctx.obj.get("file_path"))
-    if not file_path:
-        console.print("[red]No task file found[/red]")
-        raise SystemExit(1)
-
-    task_file = parse_file(file_path)
+    task_file = _load(ctx)
 
     # Collect tasks
     tasks = []
@@ -141,16 +154,11 @@ def collect_with_list(list_name, tasks, depth):
 @click.pass_context
 def add(ctx, title, list_name, parent_query):
     """Add a new task."""
-    file_path = find_task_file(explicit_file=ctx.obj.get("file_path"))
-    if not file_path:
-        console.print("[red]No task file found[/red]")
-        raise SystemExit(1)
-
-    task_file = parse_file(file_path)
+    task_file = _load(ctx)
 
     try:
         task = op_add_task(task_file, title, list_name=list_name, parent_query=parent_query)
-        write_file(task_file)
+        save(task_file)
         console.print(f"[green]Added:[/green] {task.title}")
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
@@ -165,16 +173,11 @@ def add(ctx, title, list_name, parent_query):
 @click.pass_context
 def move(ctx, query, before, after, to_list):
     """Move a task to a new position or list."""
-    file_path = find_task_file(explicit_file=ctx.obj.get("file_path"))
-    if not file_path:
-        console.print("[red]No task file found[/red]")
-        raise SystemExit(1)
-
-    task_file = parse_file(file_path)
+    task_file = _load(ctx)
 
     try:
         task = op_move_task(task_file, query, before=before, after=after, to_list=to_list)
-        write_file(task_file)
+        save(task_file)
         console.print(f"[green]Moved:[/green] {task.title}")
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
@@ -216,16 +219,11 @@ def check(ctx, as_json):
 @click.pass_context
 def rename(ctx, query, new_title):
     """Rename a task."""
-    file_path = find_task_file(explicit_file=ctx.obj.get("file_path"))
-    if not file_path:
-        console.print("[red]No task file found[/red]")
-        raise SystemExit(1)
-
-    task_file = parse_file(file_path)
+    task_file = _load(ctx)
 
     try:
         task = op_rename_task(task_file, query, new_title)
-        write_file(task_file)
+        save(task_file)
         console.print(f"[green]Renamed:[/green] {task.title}")
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
@@ -237,16 +235,11 @@ def rename(ctx, query, new_title):
 @click.pass_context
 def remove(ctx, query):
     """Remove a task."""
-    file_path = find_task_file(explicit_file=ctx.obj.get("file_path"))
-    if not file_path:
-        console.print("[red]No task file found[/red]")
-        raise SystemExit(1)
-
-    task_file = parse_file(file_path)
+    task_file = _load(ctx)
 
     try:
         title = op_remove_task(task_file, query)
-        write_file(task_file)
+        save(task_file)
         console.print(f"[green]Removed:[/green] {title}")
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
@@ -259,14 +252,11 @@ def remove(ctx, query):
 @click.pass_context
 def show(ctx, query, as_json):
     """Show detail for a single task."""
-    file_path = find_task_file(explicit_file=ctx.obj.get("file_path"))
-    if not file_path:
-        console.print("[red]No task file found[/red]")
-        raise SystemExit(1)
+    task_file = _load(ctx)
 
-    task_file = parse_file(file_path)
-    task = find_task(task_file, query)
-    if task is None:
+    try:
+        task = get_task(task_file, query)
+    except TaskNotFoundError:
         console.print(f"[red]Task not found:[/red] {query}")
         raise SystemExit(1)
 
@@ -313,21 +303,16 @@ def link(ctx, query, depends_on, doc_path):
         console.print("[red]Error:[/red] Provide --depends or --doc")
         raise SystemExit(1)
 
-    file_path = find_task_file(explicit_file=ctx.obj.get("file_path"))
-    if not file_path:
-        console.print("[red]No task file found[/red]")
-        raise SystemExit(1)
-
-    task_file = parse_file(file_path)
+    task_file = _load(ctx)
 
     try:
         if depends_on:
             task = link_dependency(task_file, query, depends_on)
-            write_file(task_file)
+            save(task_file)
             console.print(f"[green]Linked:[/green] {task.title} depends on {depends_on}")
         if doc_path:
             task = link_doc(task_file, query, doc_path)
-            write_file(task_file)
+            save(task_file)
             console.print(f"[green]Linked:[/green] {task.title} -> {doc_path}")
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
@@ -340,27 +325,20 @@ def link(ctx, query, depends_on, doc_path):
 @click.pass_context
 def note(ctx, query, text):
     """Add a note to a task."""
-    file_path = find_task_file(explicit_file=ctx.obj.get("file_path"))
-    if not file_path:
-        console.print("[red]No task file found[/red]")
-        raise SystemExit(1)
-
-    task_file = parse_file(file_path)
+    task_file = _load(ctx)
 
     try:
-        task = find_task(task_file, query)
-        if task is None:
-            console.print(f"[red]Task not found:[/red] {query}")
-            raise SystemExit(1)
+        task = get_task(task_file, query)
         existing = task.metadata.get("notes", "")
         if existing:
             task.metadata["notes"] = f"{existing}; {text}"
         else:
             task.metadata["notes"] = text
-        write_file(task_file)
+        save(task_file)
         console.print(f"[green]Added note to:[/green] {task.title}")
-    except SystemExit:
-        raise
+    except TaskNotFoundError:
+        console.print(f"[red]Task not found:[/red] {query}")
+        raise SystemExit(1)
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
         raise SystemExit(1)
@@ -377,9 +355,10 @@ def edit(ctx, query):
         raise SystemExit(1)
 
     if query:
-        task_file = parse_file(file_path)
-        task = find_task(task_file, query)
-        if task is None:
+        task_file = load_file(file_path)
+        try:
+            get_task(task_file, query)
+        except TaskNotFoundError:
             console.print(f"[red]Task not found:[/red] {query}")
             raise SystemExit(1)
 
@@ -395,16 +374,11 @@ def make_status_command(name, status, verb, past_tense):
     @click.option("--force", is_flag=True, help="Force even with incomplete dependencies")
     @click.pass_context
     def command(ctx, query, force):
-        file_path = find_task_file(explicit_file=ctx.obj.get("file_path"))
-        if not file_path:
-            console.print("[red]No task file found[/red]")
-            raise SystemExit(1)
-
-        task_file = parse_file(file_path)
+        task_file = _load(ctx)
 
         try:
             task = update_status(task_file, query, status, force=force)
-            write_file(task_file)
+            save(task_file)
             console.print(f"[green]{past_tense}:[/green] {task.title}")
         except Exception as e:
             console.print(f"[red]Error:[/red] {e}")
