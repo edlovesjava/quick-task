@@ -75,6 +75,28 @@
     - [x] Detect orphaned metadata (key: value not under a task)
     - [x] Support --json flag for tooling integration
     - [x] Exit code 0 if clean, 1 if errors found
+     
+## quick-task Improvements [#qt-improvements]
+
+- [ ] Agent-oriented metadata fields [#qt-metadata]
+    docs: spec/bootstrap-spec.md#agent-oriented-metadata
+    - [ ] First-class fields: assignee, priority, created, updated [#qt-metadata-fields]
+    - [ ] CLI flags: --assignee, --priority [#qt-metadata-cli]
+    - [ ] Filter support: qt list --assignee @builder [#qt-metadata-filter]
+- [ ] Transition history / audit log [#qt-history]
+    docs: spec/bootstrap-spec.md#transition-history
+    - [ ] Append history metadata on status change [#qt-history-append]
+    - [ ] qt show --history display [#qt-history-show]
+    - [ ] JSON output includes history [#qt-history-json]
+- [ ] File locking for concurrent access [#qt-locking]
+    docs: spec/bootstrap-spec.md#file-locking
+    - [ ] Advisory lock on write [#qt-lock-acquire]
+    - [ ] Stale lock detection [#qt-lock-stale]
+- [ ] Filter/query enhancements [#qt-filters]
+    docs: spec/bootstrap-spec.md#filter-query
+    - [ ] Compound filter support [#qt-filter-compound]
+    - [ ] --has-metadata filter [#qt-filter-metadata]
+          
 ## Done [#done]
 
 - [x] Project setup
