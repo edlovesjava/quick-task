@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-03-22T04:18:18.791959+00:00",
+  "agent": "runner",
+  "event": "state-transition",
+  "task_bookmark": "#improve-readme",
+  "payload": {
+    "from": "IN_PROGRESS",
+    "to": "IN_REVIEW",
+    "reason": "Builder completed implementation."
+  }
+}
