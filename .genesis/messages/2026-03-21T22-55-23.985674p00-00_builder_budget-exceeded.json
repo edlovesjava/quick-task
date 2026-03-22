@@ -1,0 +1,10 @@
+{
+  "timestamp": "2026-03-21T22:55:23.985674+00:00",
+  "agent": "builder",
+  "event": "budget-exceeded",
+  "task_bookmark": "#qt-metadata",
+  "payload": {
+    "tokens_used": 211335,
+    "max_tokens": 200000
+  }
+}

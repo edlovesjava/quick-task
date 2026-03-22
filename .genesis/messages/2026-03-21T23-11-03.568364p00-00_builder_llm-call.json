@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-03-21T23:11:03.568364+00:00",
+  "agent": "builder",
+  "event": "llm-call",
+  "task_bookmark": "_internal",
+  "payload": {
+    "model": "claude-sonnet-4-6",
+    "input_tokens": 10358,
+    "output_tokens": 105,
+    "attempt": 1
+  }
+}

@@ -1,0 +1,5 @@
+[budget]
+builder_max_tokens = 400000
+
+[verbose]
+tool_trace = true
