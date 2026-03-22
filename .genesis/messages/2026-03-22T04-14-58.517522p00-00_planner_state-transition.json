@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-03-22T04:14:58.517522+00:00",
+  "agent": "planner",
+  "event": "state-transition",
+  "task_bookmark": "#improve-readme",
+  "payload": {
+    "from": "ASSIGNED",
+    "to": "IN_PROGRESS",
+    "reason": "Decomposing into subtasks for executor: README polish and manual improvements."
+  }
+}

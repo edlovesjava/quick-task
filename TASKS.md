@@ -26,6 +26,8 @@
     - [ ] Compound filters: --assignee + --status + --priority [#qt-filter-compound]
     - [ ] --has-metadata flag [#qt-filter-has-meta]
     - [ ] Tests for filters [#qt-filter-tests]
+- [ ] improve README referencing a full manual in docs [#improve-readme]
+    created: 2026-03-22T03:57:14Z
 ## Backlog [#backlog]
 
 - [x] Add link command for task and doc references [#link-cmd]

@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-03-22T04:13:33.249480+00:00",
+  "agent": "runner",
+  "event": "state-transition",
+  "task_bookmark": "#improve-readme",
+  "payload": {
+    "from": "TODO",
+    "to": "ASSIGNED",
+    "reason": "Starting planner phase."
+  }
+}
