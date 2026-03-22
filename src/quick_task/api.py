@@ -17,6 +17,7 @@ from quick_task.operations import (
     rename_task,
     link_dependency,
     link_doc,
+    set_task_metadata,
     TaskNotFoundError,
     ListNotFoundError,
     CircularDependencyError,
@@ -61,6 +62,8 @@ def list_tasks(
     *,
     list_name: str | None = None,
     status: TaskStatus | None = None,
+    assignee: str | None = None,
+    priority: str | None = None,
     flat: bool = False,
 ) -> list[Task]:
     """List tasks from a task file with optional filtering.
@@ -69,6 +72,11 @@ def list_tasks(
         task_file: The parsed task file.
         list_name: Filter to tasks in this list (case-insensitive).
         status: Filter to tasks with this status.
+        assignee: Filter to tasks assigned to this person (e.g. ``@builder``).
+            Matching is case-insensitive and checks both the exact value and
+            a simple containment check so ``@builder`` matches ``@Builder``.
+        priority: Filter to tasks with this priority level (``low``,
+            ``medium``, ``high``, ``critical``).
         flat: If True, return all tasks flattened (including nested children).
               If False, return only top-level tasks per list.
     """
@@ -85,6 +93,14 @@ def list_tasks(
 
     if status is not None:
         tasks = [t for t in tasks if t.status == status]
+
+    if assignee is not None:
+        needle = assignee.lower()
+        tasks = [t for t in tasks if t.assignee is not None and t.assignee.lower() == needle]
+
+    if priority is not None:
+        needle = priority.lower()
+        tasks = [t for t in tasks if t.priority is not None and t.priority.lower() == needle]
 
     return tasks
 
@@ -111,6 +127,7 @@ __all__ = [
     "rename_task",
     "link_dependency",
     "link_doc",
+    "set_task_metadata",
     # Parsing (advanced)
     "parse_file",
     "parse_content",

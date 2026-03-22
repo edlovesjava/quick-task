@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-03-21T23:11:13.538962+00:00",
+  "agent": "runner",
+  "event": "state-transition",
+  "task_bookmark": "#qt-metadata",
+  "payload": {
+    "from": "IN_PROGRESS",
+    "to": "IN_REVIEW",
+    "reason": "Builder completed implementation."
+  }
+}

@@ -26,7 +26,6 @@
     - [ ] Compound filters: --assignee + --status + --priority [#qt-filter-compound]
     - [ ] --has-metadata flag [#qt-filter-has-meta]
     - [ ] Tests for filters [#qt-filter-tests]
-
 ## Backlog [#backlog]
 
 - [x] Add link command for task and doc references [#link-cmd]
@@ -75,10 +74,9 @@
     - [x] Detect orphaned metadata (key: value not under a task)
     - [x] Support --json flag for tooling integration
     - [x] Exit code 0 if clean, 1 if errors found
-     
 ## quick-task Improvements [#qt-improvements]
 
-- [ ] Agent-oriented metadata fields [#qt-metadata]
+- [~] Agent-oriented metadata fields [#qt-metadata]
     docs: spec/bootstrap-spec.md#agent-oriented-metadata
     - [ ] First-class fields: assignee, priority, created, updated [#qt-metadata-fields]
     - [ ] CLI flags: --assignee, --priority [#qt-metadata-cli]
@@ -96,7 +94,6 @@
     docs: spec/bootstrap-spec.md#filter-query
     - [ ] Compound filter support [#qt-filter-compound]
     - [ ] --has-metadata filter [#qt-filter-metadata]
-          
 ## Done [#done]
 
 - [x] Project setup
