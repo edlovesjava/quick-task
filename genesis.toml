@@ -1,0 +1,10 @@
+[genesis]
+project_name = "quick-task"
+tasks_file = "TASKS.md"
+genesis_dir = ".genesis"
+
+[budget]
+builder_max_tokens = 400000
+
+[verbose]
+tool_trace = true
