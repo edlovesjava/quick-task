@@ -1,20 +1,18 @@
 # Quick Task
 
-A markdown-based task management CLI. Keeps your task list in a human-readable `TASKS.md` file that can be edited by hand or managed via the `qt` command.
+A markdown-based task management CLI for humans and AI agents.  Tasks live in
+a plain-text `TASKS.md` file that you can edit by hand, commit to version
+control, and manage with the `qt` command.
 
-## Features
+## Documentation
 
-- **Markdown-native**: Tasks stored as checkbox lists in markdown
-- **Multiple statuses**: TODO, in-progress, done, cancelled, blocked, deferred
-- **Nested tasks**: Subtasks via indentation with automatic rollup
-- **Bookmarks**: Reference tasks by `[#bookmark]` for stable identification
-- **Fuzzy matching**: Find tasks by partial title or exact bookmark
-- **Dependencies & docs**: Link tasks to each other or to documentation
-- **Metadata**: Attach key-value pairs to any task
-- **File discovery**: Walks up directories to find `TASKS.md`
-- **Validation**: Check task files for syntax errors and duplicate bookmarks
-- **Python API**: Use programmatically from other tools
-- **Human + agent friendly**: Edit by hand or via CLI
+| Resource | What's inside |
+|----------|---------------|
+| **[Full Manual](docs/manual.md)** | Complete CLI reference, file format spec, behaviour rules, Python API, and agent integration guide |
+| **[Quick Start](#quick-start)** | Five-minute intro — right below |
+| `qt COMMAND --help` | Inline help for any command |
+
+---
 
 ## Installation
 
@@ -22,94 +20,60 @@ A markdown-based task management CLI. Keeps your task list in a human-readable `
 pip install quick-task
 ```
 
-Or install from source:
-
-```bash
-pip install -e ".[dev]"
-```
-
 ## Quick Start
 
-Create a `TASKS.md` file:
-
-```markdown
-## My Tasks
-
-- [ ] First task
-- [ ] Second task [#important]
-    - [ ] Subtask
-```
-
-Or use `qt init` to create one:
-
 ```bash
-qt init                    # Create simple TASKS.md
-qt init --template kanban  # Create kanban-style file
-```
+# Create a TASKS.md in the current directory
+qt init                    # simple template
+qt init --template kanban  # TODO / In Progress / Done lists
 
-Then use the CLI:
+# Add tasks
+qt add "Write tests"
+qt add "Deploy" --list "Backlog"
+qt add "Unit tests" --parent "Write tests"
 
-```bash
-qt list                    # Show all tasks
-qt add "New task"          # Add a task
-qt done "First"            # Mark matching task done
-qt start "#important"      # Start by bookmark
-qt show "#important"       # Show task details
-qt check                   # Validate task file
+# Work with tasks
+qt list                    # show everything
+qt list --status todo      # filter by status
+qt start "Write tests"     # mark in-progress
+qt done  "Write tests"     # mark done
+
+# Reference by bookmark for reliability
+qt add "Critical fix [#bug-42]"
+qt done "#bug-42"
 ```
 
 ## Task Statuses
 
-| Symbol | Status      | Command   |
-|--------|-------------|-----------|
-| `[ ]`  | TODO        | `reset`   |
-| `[~]`  | In Progress | `start`   |
-| `[x]`  | Done        | `done`    |
-| `[-]`  | Cancelled   | `cancel`  |
-| `[?]`  | Blocked     | `block`   |
-| `[>]`  | Deferred    | `defer`   |
+| Symbol | Status      | Command     |
+|--------|-------------|-------------|
+| `[ ]`  | Todo        | `qt reset`  |
+| `[~]`  | In Progress | `qt start`  |
+| `[x]`  | Done        | `qt done`   |
+| `[-]`  | Cancelled   | `qt cancel` |
+| `[?]`  | Blocked     | `qt block`  |
+| `[>]`  | Deferred    | `qt defer`  |
 
-## Commands
+## Command Overview
 
 ```
-qt list [--status S] [--list L] [--json] [--verbose]   List/filter tasks
-qt add "Title" [--list L] [--parent P]                  Add a task
-qt done/start/block/defer/cancel/reset "Query"          Change status
-qt show "Query" [--json]                                Show task detail
-qt rename "Query" "New title"                           Rename a task
-qt remove "Query"                                       Delete a task
-qt move "Query" [--before B] [--after A] [--list L]     Reorder tasks
-qt link "Query" [--depends D] [--doc URL]               Link tasks/docs
-qt note "Query" "Text"                                  Add metadata
-qt edit ["Query"]                                       Open in $EDITOR
-qt check [--json]                                       Validate syntax
-qt init [--template T]                                  Create TASKS.md
+qt init   [--template T] [--force]                Create TASKS.md
+qt list   [--status S] [--list L] [--json]        List / filter tasks
+qt add    "Title" [--list L] [--parent P]          Add a task
+qt start / done / block / defer / cancel / reset   Change status
+qt show   "query" [--json]                         Show task detail
+qt rename "query" "New title"                      Rename a task
+qt remove "query"                                  Delete a task
+qt move   "query" [--before B|--after A] [--list]  Reorder tasks
+qt link   "query" [--depends D] [--doc URL]        Link tasks / docs
+qt note   "query" "key: value"                     Add metadata
+qt edit   ["query"]                                Open in $EDITOR
+qt check  [--json]                                 Validate file
 ```
 
-## Python API
+Use `qt COMMAND --help` for full options on any command.
 
-```python
-from quick_task.api import load_file, get_task, list_tasks, add_task, update_status
-
-# Load a task file
-tasks = load_file("TASKS.md")
-
-# Find a task by bookmark
-task = get_task(tasks, "#important")
-
-# List tasks with filters
-todo = list_tasks(tasks, status=TaskStatus.TODO, flat=True)
-
-# Add a task
-add_task(tasks, "New task", list_name="My Tasks")
-
-# Update status
-update_status(tasks, "#important", TaskStatus.DONE, "TASKS.md")
-```
-
-## Documentation
-
-See [USAGE.md](USAGE.md) for detailed usage instructions.
+→ **[Full manual — all commands, format spec, behaviour rules, and agent usage](docs/manual.md)**
 
 ## License
 

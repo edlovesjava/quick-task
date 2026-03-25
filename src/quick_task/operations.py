@@ -1,6 +1,8 @@
 """Task operations - add, update, move, etc."""
 
-from quick_task.models import Task, TaskList, TaskFile, TaskStatus
+from datetime import datetime, timezone
+
+from quick_task.models import Task, TaskList, TaskFile, TaskStatus, PRIORITY_LEVELS
 from quick_task.matcher import find_task, all_tasks
 
 
@@ -19,14 +21,46 @@ class CircularDependencyError(Exception):
     pass
 
 
+def _now_iso() -> str:
+    """Return current UTC time as an ISO-8601 string (no microseconds)."""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def add_task(
     task_file: TaskFile,
     title: str,
     list_name: str | None = None,
     parent_query: str | None = None,
+    *,
+    assignee: str | None = None,
+    priority: str | None = None,
+    stamp_created: bool = True,
 ) -> Task:
-    """Add a new task to the task file."""
+    """Add a new task to the task file.
+
+    Args:
+        task_file: The task file to add the task to.
+        title: Title of the new task.
+        list_name: Optional list name to add to (defaults to first list).
+        parent_query: Optional parent task query (creates a subtask).
+        assignee: Optional assignee string (e.g. ``@builder``).
+        priority: Optional priority – one of ``low``, ``medium``, ``high``,
+            ``critical``.
+        stamp_created: If True (default), set a ``created`` timestamp.
+    """
+    if priority is not None and priority not in PRIORITY_LEVELS:
+        raise ValueError(
+            f"Invalid priority {priority!r}. Must be one of: {', '.join(PRIORITY_LEVELS)}"
+        )
+
     task = Task(title=title, status=TaskStatus.TODO)
+
+    if assignee is not None:
+        task.assignee = assignee
+    if priority is not None:
+        task.priority = priority
+    if stamp_created:
+        task.created = _now_iso()
 
     if parent_query:
         parent = find_task(task_file, parent_query)
@@ -37,6 +71,49 @@ def add_task(
 
     target_list = get_list(task_file, list_name)
     target_list.tasks.append(task)
+    return task
+
+
+def set_task_metadata(
+    task_file: TaskFile,
+    query: str,
+    *,
+    assignee: str | None = None,
+    priority: str | None = None,
+    stamp_updated: bool = True,
+) -> Task:
+    """Set agent-oriented metadata on an existing task.
+
+    Passing ``None`` for a field leaves it unchanged.  To *clear* a field
+    pass the sentinel string ``""`` (empty string).
+
+    Args:
+        task_file: The task file containing the task.
+        query: Bookmark or title substring to find the task.
+        assignee: New assignee value, or ``""`` to remove.
+        priority: New priority value, or ``""`` to remove.
+        stamp_updated: If True (default), update the ``updated`` timestamp.
+    """
+    task = find_task(task_file, query)
+    if task is None:
+        raise TaskNotFoundError(f"Task not found: {query}")
+
+    if assignee is not None:
+        task.assignee = assignee if assignee != "" else None
+
+    if priority is not None:
+        if priority == "":
+            task.priority = None
+        else:
+            if priority not in PRIORITY_LEVELS:
+                raise ValueError(
+                    f"Invalid priority {priority!r}. Must be one of: {', '.join(PRIORITY_LEVELS)}"
+                )
+            task.priority = priority
+
+    if stamp_updated:
+        task.updated = _now_iso()
+
     return task
 
 
@@ -67,6 +144,8 @@ def update_status(
         raise TaskNotFoundError(f"Task not found: {query}")
 
     set_status_recursive(task, status)
+    # Stamp updated timestamp on status change
+    task.updated = _now_iso()
 
     # Check for parent rollup
     if status == TaskStatus.DONE:
