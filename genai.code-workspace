@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "../genai"
+		},
+		{
+			"path": "."
+		}
+	],
+	"settings": {}
+}
