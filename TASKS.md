@@ -1,33 +1,14 @@
 ## Genesis API [#genesis-api]
 
-- [ ] Python API module (spec §8.1) [#qt-api]
+- [x] Python API module (spec §8.1) [#qt-api]
     docs: docs/plans/2026-03-20-python-api-design.md
-    - [ ] Create src/quick_task/api.py public module [#qt-api-module]
-    - [ ] load_file() convenience function [#qt-api-load]
-    - [ ] get_task() wrapping matcher.find_task [#qt-api-get]
-    - [ ] Re-export add_task, update_status, list_tasks [#qt-api-reexport]
-    - [ ] Tests for API module [#qt-api-tests]
-    - [ ] CLI imports from API (thin wrapper) [#qt-api-cli]
-- [ ] Agent metadata fields (spec §8.2) [#qt-agent-meta]
-    - [ ] First-class fields: assignee, priority, created, updated [#qt-meta-fields]
-    - [ ] CLI: qt add --assignee --priority [#qt-meta-cli-add]
-    - [ ] CLI: qt list --assignee --status compound filters [#qt-meta-cli-list]
-    - [ ] Tests for metadata fields [#qt-meta-tests]
-- [ ] Transition history / audit log (spec §8.3) [#qt-history]
-    - [ ] Append history metadata on status change [#qt-history-append]
-    - [ ] qt show --history display [#qt-history-show]
-    - [ ] qt list --json includes history [#qt-history-json]
-    - [ ] Tests for history [#qt-history-tests]
-- [ ] File locking for concurrent access (spec §8.4) [#qt-locking]
-    - [ ] Advisory .TASKS.md.lock file [#qt-lock-file]
-    - [ ] Timeout + stale lock detection [#qt-lock-timeout]
-    - [ ] Tests for locking [#qt-lock-tests]
-- [ ] Filter/query enhancements (spec §8.5) [#qt-filters]
-    - [ ] Compound filters: --assignee + --status + --priority [#qt-filter-compound]
-    - [ ] --has-metadata flag [#qt-filter-has-meta]
-    - [ ] Tests for filters [#qt-filter-tests]
-- [ ] improve README referencing a full manual in docs [#improve-readme]
-    created: 2026-03-22T03:57:14Z
+    - [x] Create src/quick_task/api.py public module [#qt-api-module]
+    - [x] load_file() convenience function [#qt-api-load]
+    - [x] get_task() wrapping matcher.find_task [#qt-api-get]
+    - [x] Re-export add_task, update_status, list_tasks [#qt-api-reexport]
+    - [x] Tests for API module [#qt-api-tests]
+    - [x] CLI imports from API (thin wrapper) [#qt-api-cli]
+- [x] improve README referencing a full manual in docs [#improve-readme]
 ## Backlog [#backlog]
 
 - [x] Add link command for task and doc references [#link-cmd]
@@ -78,11 +59,21 @@
     - [x] Exit code 0 if clean, 1 if errors found
 ## quick-task Improvements [#qt-improvements]
 
-- [~] Agent-oriented metadata fields [#qt-metadata]
-    docs: spec/bootstrap-spec.md#agent-oriented-metadata
-    - [ ] First-class fields: assignee, priority, created, updated [#qt-metadata-fields]
-    - [ ] CLI flags: --assignee, --priority [#qt-metadata-cli]
-    - [ ] Filter support: qt list --assignee @builder [#qt-metadata-filter]
+- [x] Agent-oriented metadata fields [#qt-metadata]
+    docs: docs/designs/qt-metadata.md, docs/designs/qt-metadata-tests.md
+    updated: 2026-03-29T02:07:58Z
+    - [x] Create metadata.py with constants and validation [#qt-metadata-module]
+        updated: 2026-03-29T02:07:58Z
+    - [x] Extend add_task() with assignee/priority params [#qt-metadata-add-task]
+        updated: 2026-03-29T02:07:58Z
+    - [x] Add set_metadata() to operations.py [#qt-metadata-set]
+        updated: 2026-03-29T02:07:58Z
+    - [x] CLI flags: --assignee, --priority on add and list [#qt-metadata-cli]
+        updated: 2026-03-29T02:07:58Z
+    - [x] Extend api.list_tasks() with assignee/priority filters [#qt-metadata-api]
+        updated: 2026-03-29T02:07:58Z
+    - [x] Tests for metadata, operations, CLI, and API [#qt-metadata-tests]
+        updated: 2026-03-29T02:07:58Z
 - [ ] Transition history / audit log [#qt-history]
     docs: spec/bootstrap-spec.md#transition-history
     - [ ] Append history metadata on status change [#qt-history-append]

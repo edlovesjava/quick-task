@@ -509,3 +509,180 @@ def test_init_force_overwrites():
         content = Path("TASKS.md").read_text()
         assert "## Tasks" in content
         assert "existing content" not in content
+
+
+# ---------------------------------------------------------------------------
+# Metadata CLI: add --assignee / --priority
+# ---------------------------------------------------------------------------
+
+def test_add_with_assignee():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("## Tasks\n\n")
+        result = runner.invoke(main, ["add", "My task", "--assignee", "@builder"])
+        assert result.exit_code == 0
+        content = Path("TASKS.md").read_text()
+        assert "assignee: @builder" in content
+
+
+def test_add_with_priority():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("## Tasks\n\n")
+        result = runner.invoke(main, ["add", "My task", "--priority", "high"])
+        assert result.exit_code == 0
+        content = Path("TASKS.md").read_text()
+        assert "priority: high" in content
+
+
+def test_add_with_assignee_and_priority():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("## Tasks\n\n")
+        result = runner.invoke(main, ["add", "My task", "--assignee", "@planner", "--priority", "critical"])
+        assert result.exit_code == 0
+        content = Path("TASKS.md").read_text()
+        assert "assignee: @planner" in content
+        assert "priority: critical" in content
+
+
+def test_add_priority_case_insensitive():
+    """--priority is a Choice; Click normalises it to lowercase."""
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("## Tasks\n\n")
+        result = runner.invoke(main, ["add", "My task", "--priority", "HIGH"])
+        assert result.exit_code == 0
+        content = Path("TASKS.md").read_text()
+        assert "priority: high" in content
+
+
+def test_add_invalid_priority_rejected():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("## Tasks\n\n")
+        result = runner.invoke(main, ["add", "My task", "--priority", "urgent"])
+        # Click.Choice should reject unknown values
+        assert result.exit_code != 0
+
+
+# ---------------------------------------------------------------------------
+# Metadata CLI: list --assignee / --priority filters
+# ---------------------------------------------------------------------------
+
+def test_list_filter_by_assignee():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] Task A
+    assignee: @builder
+- [ ] Task B
+    assignee: @planner
+""")
+        result = runner.invoke(main, ["list", "--assignee", "@builder"])
+        assert result.exit_code == 0
+        assert "Task A" in result.output
+        assert "Task B" not in result.output
+
+
+def test_list_filter_by_priority():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] High priority task
+    priority: high
+- [ ] Low priority task
+    priority: low
+""")
+        result = runner.invoke(main, ["list", "--priority", "high"])
+        assert result.exit_code == 0
+        assert "High priority task" in result.output
+        assert "Low priority task" not in result.output
+
+
+def test_list_filter_assignee_case_insensitive():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] Task A
+    assignee: @Builder
+""")
+        result = runner.invoke(main, ["list", "--assignee", "@builder"])
+        assert result.exit_code == 0
+        assert "Task A" in result.output
+
+
+def test_list_filter_assignee_excludes_unassigned():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] Assigned task
+    assignee: @builder
+- [ ] Unassigned task
+""")
+        result = runner.invoke(main, ["list", "--assignee", "@builder"])
+        assert result.exit_code == 0
+        assert "Assigned task" in result.output
+        assert "Unassigned task" not in result.output
+
+
+def test_list_filter_combined_assignee_and_priority():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] Match
+    assignee: @builder
+    priority: high
+- [ ] Wrong priority
+    assignee: @builder
+    priority: low
+- [ ] Wrong assignee
+    assignee: @planner
+    priority: high
+""")
+        result = runner.invoke(main, ["list", "--assignee", "@builder", "--priority", "high"])
+        assert result.exit_code == 0
+        assert "Match" in result.output
+        assert "Wrong priority" not in result.output
+        assert "Wrong assignee" not in result.output
+
+
+# ---------------------------------------------------------------------------
+# Metadata CLI: list --json includes metadata field
+# ---------------------------------------------------------------------------
+
+def test_list_json_includes_metadata():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] My task
+    assignee: @builder
+    priority: high
+""")
+        result = runner.invoke(main, ["list", "--json"])
+        assert result.exit_code == 0
+        import json
+        data = json.loads(result.output)
+        assert len(data) == 1
+        assert data[0]["metadata"]["assignee"] == "@builder"
+        assert data[0]["metadata"]["priority"] == "high"
+
+
+def test_list_json_metadata_empty_for_plain_task():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        Path("TASKS.md").write_text("""## Tasks
+
+- [ ] Plain task
+""")
+        result = runner.invoke(main, ["list", "--json"])
+        assert result.exit_code == 0
+        import json
+        data = json.loads(result.output)
+        assert data[0]["metadata"] == {}

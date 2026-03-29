@@ -348,3 +348,103 @@ def test_link_dependency_circular_detection():
     # B depends on A would create a cycle
     with pytest.raises(CircularDependencyError):
         link_dependency(tf, "Task B", depends_on="Task A")
+
+
+# ---------------------------------------------------------------------------
+# Metadata: add_task with assignee / priority
+# ---------------------------------------------------------------------------
+
+def test_add_task_with_assignee():
+    tf = make_empty_task_file()
+    task = add_task(tf, "My task", assignee="@builder")
+    assert task.metadata.get("assignee") == "@builder"
+
+
+def test_add_task_with_priority():
+    tf = make_empty_task_file()
+    task = add_task(tf, "My task", priority="high")
+    assert task.metadata.get("priority") == "high"
+
+
+def test_add_task_priority_is_lowercased():
+    tf = make_empty_task_file()
+    task = add_task(tf, "My task", priority="HIGH")
+    assert task.metadata.get("priority") == "high"
+
+
+def test_add_task_invalid_priority_raises():
+    import pytest
+    tf = make_empty_task_file()
+    with pytest.raises(ValueError, match="Invalid priority"):
+        add_task(tf, "My task", priority="urgent")
+
+
+def test_add_task_with_stamp_created():
+    tf = make_empty_task_file()
+    task = add_task(tf, "My task", stamp_created=True)
+    assert "created" in task.metadata
+    # Basic ISO format check
+    import re
+    assert re.match(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$", task.metadata["created"])
+
+
+def test_add_task_without_stamp_created():
+    tf = make_empty_task_file()
+    task = add_task(tf, "My task", stamp_created=False)
+    assert "created" not in task.metadata
+
+
+# ---------------------------------------------------------------------------
+# Metadata: set_task_metadata
+# ---------------------------------------------------------------------------
+
+def test_set_task_metadata_assignee():
+    from quick_task.operations import set_task_metadata
+
+    task = Task(title="My task", status=TaskStatus.TODO)
+    tf = TaskFile(path="test.md", lists=[TaskList(name="Tasks", tasks=[task])])
+
+    set_task_metadata(tf, "My task", assignee="@planner")
+    assert task.metadata.get("assignee") == "@planner"
+
+
+def test_set_task_metadata_priority():
+    from quick_task.operations import set_task_metadata
+
+    task = Task(title="My task", status=TaskStatus.TODO)
+    tf = TaskFile(path="test.md", lists=[TaskList(name="Tasks", tasks=[task])])
+
+    set_task_metadata(tf, "My task", priority="critical")
+    assert task.metadata.get("priority") == "critical"
+
+
+def test_set_task_metadata_stamps_updated():
+    from quick_task.operations import set_task_metadata
+    import re
+
+    task = Task(title="My task", status=TaskStatus.TODO)
+    tf = TaskFile(path="test.md", lists=[TaskList(name="Tasks", tasks=[task])])
+
+    set_task_metadata(tf, "My task", assignee="@builder")
+    assert "updated" in task.metadata
+    assert re.match(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$", task.metadata["updated"])
+
+
+def test_set_task_metadata_no_stamp_updated():
+    from quick_task.operations import set_task_metadata
+
+    task = Task(title="My task", status=TaskStatus.TODO)
+    tf = TaskFile(path="test.md", lists=[TaskList(name="Tasks", tasks=[task])])
+
+    set_task_metadata(tf, "My task", assignee="@builder", stamp_updated=False)
+    assert "updated" not in task.metadata
+
+
+def test_set_task_metadata_clears_assignee():
+    from quick_task.operations import set_task_metadata
+
+    task = Task(title="My task", status=TaskStatus.TODO, metadata={"assignee": "@builder"})
+    tf = TaskFile(path="test.md", lists=[TaskList(name="Tasks", tasks=[task])])
+
+    set_task_metadata(tf, "My task", assignee="", stamp_updated=False)
+    assert "assignee" not in task.metadata

@@ -25,6 +25,15 @@ from quick_task.operations import (
 from quick_task.parser import parse_file, parse_content
 from quick_task.writer import write_file, write_content
 from quick_task.checker import check_file, check_content
+from quick_task.metadata import (
+    FIELD_ASSIGNEE,
+    FIELD_PRIORITY,
+    FIELD_CREATED,
+    FIELD_UPDATED,
+    VALID_PRIORITIES,
+    validate_priority,
+    now_iso,
+)
 
 
 def load_file(path: str | Path | None = None) -> TaskFile:
@@ -145,4 +154,12 @@ __all__ = [
     "ListNotFoundError",
     "CircularDependencyError",
     "AmbiguousMatchError",
+    # Metadata constants and helpers
+    "FIELD_ASSIGNEE",
+    "FIELD_PRIORITY",
+    "FIELD_CREATED",
+    "FIELD_UPDATED",
+    "VALID_PRIORITIES",
+    "validate_priority",
+    "now_iso",
 ]

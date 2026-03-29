@@ -85,8 +85,10 @@ def main(ctx, file_path):
 @click.option("--list", "-l", "list_name", help="Filter by list name")
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
 @click.option("--verbose", "-v", is_flag=True, help="Show metadata")
+@click.option("--assignee", help="Filter by assignee (case-insensitive exact match)")
+@click.option("--priority", help="Filter by priority (low/medium/high/critical)")
 @click.pass_context
-def list_tasks(ctx, status, list_name, as_json, verbose):
+def list_tasks(ctx, status, list_name, as_json, verbose, assignee, priority):
     """List tasks."""
     task_file = _load(ctx)
 
@@ -103,6 +105,16 @@ def list_tasks(ctx, status, list_name, as_json, verbose):
         target_status = STATUS_NAMES.get(status.lower())
         tasks = [t for t in tasks if t["status"] == target_status]
 
+    # Filter by assignee
+    if assignee:
+        needle = assignee.lower()
+        tasks = [t for t in tasks if t["task"].metadata.get("assignee", "").lower() == needle]
+
+    # Filter by priority
+    if priority:
+        needle = priority.lower()
+        tasks = [t for t in tasks if t["task"].metadata.get("priority", "").lower() == needle]
+
     if as_json:
         output = [
             {
@@ -110,6 +122,7 @@ def list_tasks(ctx, status, list_name, as_json, verbose):
                 "status": t["status"].name.lower(),
                 "list": t["list"],
                 "bookmark": t["task"].bookmark,
+                "metadata": dict(t["task"].metadata),
             }
             for t in tasks
         ]
@@ -121,9 +134,9 @@ def list_tasks(ctx, status, list_name, as_json, verbose):
         table.add_column("List")
 
         for t in tasks:
-            status = t["status"]
-            style = STATUS_STYLES[status]
-            symbol = STATUS_SYMBOLS[status]
+            status_val = t["status"]
+            style = STATUS_STYLES[status_val]
+            symbol = STATUS_SYMBOLS[status_val]
             indent = "  " * t["depth"]
             task_text = f"{indent}{t['task'].title}"
             if t["task"].bookmark:
@@ -151,13 +164,25 @@ def collect_with_list(list_name, tasks, depth):
 @click.argument("title")
 @click.option("--list", "-l", "list_name", help="Target list name")
 @click.option("--parent", "-p", "parent_query", help="Parent task (creates subtask)")
+@click.option("--assignee", help="Assign to an agent or person (e.g. @builder)")
+@click.option(
+    "--priority",
+    type=click.Choice(["low", "medium", "high", "critical"], case_sensitive=False),
+    help="Task priority",
+)
 @click.pass_context
-def add(ctx, title, list_name, parent_query):
+def add(ctx, title, list_name, parent_query, assignee, priority):
     """Add a new task."""
     task_file = _load(ctx)
 
     try:
-        task = op_add_task(task_file, title, list_name=list_name, parent_query=parent_query)
+        task = op_add_task(
+            task_file, title,
+            list_name=list_name,
+            parent_query=parent_query,
+            assignee=assignee,
+            priority=priority,
+        )
         save(task_file)
         console.print(f"[green]Added:[/green] {task.title}")
     except Exception as e:

@@ -48,10 +48,12 @@ def add_task(
             ``critical``.
         stamp_created: If True (default), set a ``created`` timestamp.
     """
-    if priority is not None and priority not in PRIORITY_LEVELS:
-        raise ValueError(
-            f"Invalid priority {priority!r}. Must be one of: {', '.join(PRIORITY_LEVELS)}"
-        )
+    if priority is not None:
+        priority = priority.lower()
+        if priority not in PRIORITY_LEVELS:
+            raise ValueError(
+                f"Invalid priority {priority!r}. Must be one of: {', '.join(PRIORITY_LEVELS)}"
+            )
 
     task = Task(title=title, status=TaskStatus.TODO)
 
@@ -105,6 +107,7 @@ def set_task_metadata(
         if priority == "":
             task.priority = None
         else:
+            priority = priority.lower()
             if priority not in PRIORITY_LEVELS:
                 raise ValueError(
                     f"Invalid priority {priority!r}. Must be one of: {', '.join(PRIORITY_LEVELS)}"
